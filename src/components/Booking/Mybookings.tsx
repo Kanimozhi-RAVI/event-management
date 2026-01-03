@@ -22,6 +22,7 @@ import type { RootState } from '../rootReducer';
 import { cancelBookingRequest, getUserBookingsRequest } from '../Redux/Actions/BookingActions';
 
 type TabType = 'upcoming' | 'past' | 'cancelled';
+type BookingStatus = "upcoming" | "past" | "cancelled";
 interface TimeSlot {
   start: string;
   end: string;
@@ -91,42 +92,31 @@ const MyBookings = () => {
     dispatch(cancelBookingRequest(bookingId, eventId));
   };
 
-  // FIX 4: Better date handling for filtering
-  const now = new Date();
-  now.setHours(0, 0, 0, 0); // Reset to start of day for fair comparison
-  
-  const filteredBookings = (bookings || [])
-    .map(b => {
-      // Handle Firebase Timestamp or regular Date
-      let bookingDate;
-      if (b.bookingDate?.toDate) {
-        bookingDate = b.bookingDate.toDate();
-      } else if (b.bookingDate?.seconds) {
-        bookingDate = new Date(b.bookingDate.seconds * 1000);
-      } else {
-        bookingDate = new Date(b.bookingDate);
-      }
-      bookingDate.setHours(0, 0, 0, 0); // Compare dates only, ignore time
 
-      // Determine status if not explicitly set
-      let status = b.status;
-      if (!status || status === '') {
-        // If booking date is today or in future = upcoming
-        // If booking date is in past = past
-        if (bookingDate >= now) {
-          status = 'upcoming';
-        } else {
-          status = 'past';
-        }
-      }
+// start of today
 
-      return {
-        ...b,
-        bookingDate,
-        status
-      };
-    })
-    .filter(b => b.status === selectedTab);
+const now = new Date();
+now.setHours(0, 0, 0, 0);
+
+const filteredBookings = (bookings || []).map((b: Booking) => {
+  // Convert Firebase Timestamp or plain date to JS Date
+  let bookingDate: Date;
+  if (b.bookingDate?.toDate) {
+    bookingDate = b.bookingDate.toDate();
+  } else if (b.bookingDate?.seconds) {
+    bookingDate = new Date(b.bookingDate.seconds * 1000);
+  } else {
+    bookingDate = new Date(b.bookingDate);
+  }
+  bookingDate.setHours(0, 0, 0, 0); // normalize for date comparison
+
+  // Determine status if not explicitly set
+  let status: BookingStatus = b.status ?? (bookingDate >= now ? 'upcoming' : 'past');
+
+  return { ...b, bookingDate, status };
+}).filter((b: Booking) => b.status === selectedTab);
+
+
 
   const tabs = [
     { id: 'upcoming' as TabType, label: 'Upcoming', icon: Calendar, color: 'from-[#1FA8B8] to-[#158894]' },
@@ -281,12 +271,14 @@ const MyBookings = () => {
           transition={{ delay: 0.2 }}
           className="flex gap-3 mb-8 overflow-x-auto pb-2"
         >
-          {tabs.map((tab, index) => {
-            const Icon = tab.icon;
-            const count = (bookings || []).filter(b => {
-              const status = b.status || 'upcoming';
-              return status === tab.id;
-            }).length;
+         {tabs.map((tab, index) => {
+  const Icon = tab.icon;
+
+  const count = (bookings || []).filter((b: Booking) => {
+    // Use status from booking, fallback to 'upcoming'
+    const status = b.status || 'upcoming';
+    return status === tab.id;
+  }).length;  
             
             return (
               <motion.button

@@ -3,12 +3,26 @@ import { auth, db } from './firebase';
 import { useEffect } from 'react';
 import { signOut } from 'firebase/auth';
 
+export interface BookingData {
+  userId: string;
+  bookingDate: Date | any;
+  timeSlot: string;
+  status?: string;
+  [key: string]: any;
+}
 export interface Booking {
   id: string;
   userId: string;
   bookingDate: Date | any;
   status?: string;
   [key: string]: any;
+}
+
+export interface BookingResponse {
+  success: boolean;
+  booking?: BookingData & { id: string };
+  bookings?: BookingData[];
+  error?: string;
 }
 
 // Fetch all bookings of a user
@@ -23,15 +37,19 @@ export const getUserBookings = async (userId: string) => {
     const snapshot = await getDocs(q);
     console.log("📦 Snapshot size:", snapshot.size);
     
-const bookings = snapshot.docs.map(doc => {
+const bookings =snapshot.docs.map(doc => {
   const data = doc.data();
-
   return {
     id: doc.id,
     ...data,
-    bookingDate: data.bookingDate?.toDate().toISOString() // ✅ serialize
+    bookingDate: data.bookingDate?.toDate?.()
+      ? data.bookingDate.toDate().toISOString()
+      : data.bookingDate instanceof Date
+      ? data.bookingDate.toISOString()
+      : data.bookingDate
   };
 });
+
 
     
     console.log("📦 Fetched bookings:", bookings);
@@ -63,7 +81,7 @@ export const cancelBooking = async (bookingId: string): Promise<{ success: boole
 };
 
 
-export const createBooking = async (data: any) => {
+export const createBooking = async (data: BookingData): Promise<BookingResponse> =>{
   try {
     const bookingData = {
       ...data,
@@ -97,10 +115,7 @@ export const createBooking = async (data: any) => {
     };
   }
 };
-export const updateBooking = async (
-  bookingId: string,
-  updatedData: any
-) => {
+export const updateBooking = async (bookingId: string, updatedData: Partial<BookingData>): Promise<{ success: boolean; error?: string }> => {
   try {
     const bookingRef = doc(db, "bookings", bookingId);
 

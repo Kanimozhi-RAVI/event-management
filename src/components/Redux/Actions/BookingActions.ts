@@ -1,3 +1,4 @@
+import { createAction } from '@reduxjs/toolkit';
 import { SET_CURRENT_BOOKING } from '../Reducer/bookingReducer';
 import * as types from '../Types/BookingTypes';
 
@@ -17,10 +18,13 @@ export const getUserBookingsFailure = (error: string) => ({
 });
 
 // BookingActions.ts
-export const cancelBookingRequest = (payload: { bookingId: string; eventId: string }) => ({
-  type: "CANCEL_BOOKING_REQUEST",
-  payload,
+// redux/actions/bookingActions.ts
+export const cancelBookingRequest = (bookingId: string, eventId?: string | string[]) => ({
+  type: 'CANCEL_BOOKING_REQUEST',
+  payload: { bookingId, eventId }
 });
+
+
 
 
 export const cancelBookingSuccess = (bookingId: string) => ({
