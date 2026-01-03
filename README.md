@@ -48,7 +48,7 @@ successfully book events with proper validations.
 
 ## Live Demo
 
-👉 [https://event-management-eal2.vercel.app/](https://event-management-eal2.vercel.app/)
+👉 https://event-management-27eb.vercel.app/
 
 ## GitHub Repository
 
