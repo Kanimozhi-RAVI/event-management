@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -81,7 +81,7 @@ useEffect(() => {
 }, [error, toast]);
 
 
-  const leftPanelVariants = {
+  const leftPanelVariants :Variants= {
     hidden: { x: -100, opacity: 0 },
     visible: {
       x: 0,
@@ -95,7 +95,7 @@ useEffect(() => {
     }
   };
 
-  const rightPanelVariants = {
+  const rightPanelVariants:Variants= {
     hidden: { x: 100, opacity: 0 },
     visible: {
       x: 0,
@@ -110,14 +110,16 @@ useEffect(() => {
     }
   };
 
-  const floatingAnimation = {
+const floatingAnimation: Variants = {
+  float: {
     y: [0, -20, 0],
     transition: {
       duration: 3,
       repeat: Infinity,
-      ease: "easeInOut"
-    }
-  };
+      ease: "easeInOut",
+    },
+  },
+}as const
 
   return (
     <div className="min-h-screen bg-[#F5F5F5] flex items-center justify-center p-4 relative overflow-hidden">
@@ -183,7 +185,7 @@ useEffect(() => {
                 transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
               />
 
-              <motion.div animate={floatingAnimation} className="relative z-10">
+              <motion.div variants={floatingAnimation} className="relative z-10">
                 <motion.div
                   initial={{ scale: 0, rotate: -180 }}
                   animate={{ scale: 1, rotate: 0 }}

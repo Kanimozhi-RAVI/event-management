@@ -4,7 +4,8 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/ui/Navbar";
 import { useEffect, useState } from "react";
-import { collection, getDoc } from "firebase/firestore";
+import { collection, getDoc, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 export default function Home() {
   const [bookings, setBookings] = useState<any[]>([]);
@@ -15,27 +16,29 @@ const [selectedSlot, setSelectedSlot] = useState("");
     const handleBook = (event: any) => {
     navigate(`/book/${event.id}`, { state: event });
   };
-  useEffect(() => {
-  const fetchBookings = async () => {
-    const snap = await getDoc(collection(db, "bookings"));
+ useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        // ✅ Use getDocs for a collection
+        const snap = await getDocs(collection(db, "bookings"));
 
-    const data = snap.docs.map(doc => {
-      const d = doc.data();
-      return {
-        eventId: d.eventId,
-        timeSlot: d.timeSlot,
-        bookingDate: d.bookingDate
-          .toDate()
-          .toISOString()
-          .split("T")[0],
-      };
-    });
+        const data = snap.docs.map(doc => {
+          const d = doc.data();
+          return {
+            eventId: d.eventId,
+            timeSlot: d.timeSlot,
+            bookingDate: d.bookingDate?.toDate().toISOString().split("T")[0] || "",
+          };
+        });
 
-    setBookings(data);
-  };
+        setBookings(data);
+      } catch (error) {
+        console.error("Error fetching bookings:", error);
+      }
+    };
 
-  fetchBookings();
-}, []);
+    fetchBookings();
+  }, []);
 const availableEvents = events.filter(event => {
   if (!selectedDate || !selectedSlot) return true;
 

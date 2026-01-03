@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, type Variants } from "framer-motion";
 import {
   addDoc,
   collection,
@@ -464,7 +464,7 @@ useEffect(() => {
     }
   }, [booking, bookingLoading, error, hasSubmitted]);
 
-  const leftVariants = {
+  const leftVariants:Variants= {
     hidden: { opacity: 0, x: -60 },
     visible: {
       opacity: 1,
@@ -473,14 +473,20 @@ useEffect(() => {
     }
   };
 
-  const cardVariants = {
-    hidden: { opacity: 0, x: 80 },
-    visible: {
-      opacity: 1,
-      x: 0,
-      transition: { duration: 1.1, ease: "easeOut" }
-    }
-  };
+const cardVariants: Variants = {
+  hidden: { opacity: 0, x: -50 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: {
+      type: "spring", // ✅ type matches AnimationGeneratorType
+      stiffness: 300,
+      damping: 25,
+      duration: 0.5, // optional
+      ease: "easeInOut" // ✅ must match Easing type
+    },
+  },
+};
 
   /* ================= LOADING UI ================= */
 
