@@ -16,10 +16,12 @@ export const getUserBookingsFailure = (error: string) => ({
   payload: error,
 });
 
-export const cancelBookingRequest = (bookingId: string) => ({
-  type: types.CANCEL_BOOKING_REQUEST,
-  payload: bookingId,
+// BookingActions.ts
+export const cancelBookingRequest = (payload: { bookingId: string; eventId: string }) => ({
+  type: "CANCEL_BOOKING_REQUEST",
+  payload,
 });
+
 
 export const cancelBookingSuccess = (bookingId: string) => ({
   type: types.CANCEL_BOOKING_SUCCESS,

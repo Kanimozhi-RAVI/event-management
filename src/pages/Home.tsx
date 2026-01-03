@@ -1,16 +1,16 @@
+import React from "react";
 import { events } from "@/data/events";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import Navbar from "@/components/ui/Navbar";
 import { useEffect, useState } from "react";
 import { collection, getDoc, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 export default function Home() {
   const [bookings, setBookings] = useState<any[]>([]);
-const [selectedDate, setSelectedDate] = useState("");
-const [selectedSlot, setSelectedSlot] = useState("");
+ const [selectedDate, setSelectedDate] = useState<string>("");
+  const [selectedSlot, setSelectedSlot] = useState<string>("");
 
   const navigate = useNavigate();
     const handleBook = (event: any) => {
