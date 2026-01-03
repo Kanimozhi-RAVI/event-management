@@ -2,22 +2,16 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import {
-  addDoc,
   collection,
   Timestamp,
   query,
   where,
   getDocs,
-  updateDoc,
-  doc
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import {
-  ArrowLeft,
   Calendar,
-  Clock,
-  Check,
   Lock,
   CheckCircle2,
   Sparkles,
@@ -26,7 +20,7 @@ import {
 import eventimage from '../../assets/event.jpg';
 import { useDispatch, useSelector } from "react-redux";
 import { createBookingRequest, updateBookingRequest } from "../Redux/Actions/BookingActions";
-import type { RootState } from "../rootReducer";
+
 
 /* ================= TYPES ================= */
 
@@ -99,7 +93,6 @@ const BookingPage: React.FC = () => {
 
   const [step, setStep] = useState<1 | 3>(1);
   const [bookedSlots, setBookedSlots] = useState<string[]>([]);
-  const [bookedDates, setBookedDates] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
@@ -108,7 +101,9 @@ const BookingPage: React.FC = () => {
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [open, setOpen] = useState(false);
   const [startTime, setStartTime] = useState<string | null>(null);
-  const [endTime, setEndTime] = useState<string | null>(null);
+ const [_bookedDates, setBookedDates] = useState<string[]>([]);
+const [_endTime, setEndTime] = useState<string | null>(null);
+
 const dropdownRef = useRef<HTMLDivElement>(null);
   const editData = state?.booking;
   
@@ -203,9 +198,7 @@ const handleSelect = (time: string) => {
 };
 
 
-  const displayText = formData.selectedSlot
-    ? `${formData.selectedSlot.start} - ${formData.selectedSlot.end}`
-    : "Select Time";
+
 
   /* ================= FETCH BOOKED DATES ================= */
 const availableSlots = HOURLY_SLOTS.map((time, index) => {

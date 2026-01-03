@@ -370,7 +370,7 @@ const filteredBookings = (bookings || []).map((b: Booking) => {
               }}
               className="space-y-4"
             >
-              {filteredBookings.map((booking) => (
+              {filteredBookings.map((booking :Booking) => (
                 <motion.div
                   key={booking.id}
                   variants={{

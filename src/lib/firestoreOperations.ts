@@ -58,12 +58,13 @@ const bookings =snapshot.docs.map(doc => {
       success: true,
       bookings // ✅ Plural - always an array
     };
-  } catch (error) {
+  }catch (error: unknown) {
     console.error("❌ Fetch error:", error);
+    const message = error instanceof Error ? error.message : String(error);
     return {
       success: false,
-      error: error.message,
-      bookings: [] // ✅ Empty array on error
+      error: message,
+      bookings: [],
     };
   }
 };
