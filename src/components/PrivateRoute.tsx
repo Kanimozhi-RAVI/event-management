@@ -1,16 +1,11 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import type { JSX } from "react";
-import PageLoader from "./PageLoader";
 
-const PrivateRoute = ({ children }: { children: JSX.Element }) => {
-  const { user, loading } = useAuth();
+const PrivateRoute = () => {
+  const { user } = useAuth();
 
-  if (loading) return <PageLoader />; // wait for Firebase auth
-
-  if (!user) return <Navigate to="/login" replace />; // redirect only if user null
-
-  return children; // render dashboard
+  // Auth already resolved, render Outlet if user exists
+  return user ? <Outlet /> : <Navigate to="/login" replace />;
 };
 
 export default PrivateRoute;
