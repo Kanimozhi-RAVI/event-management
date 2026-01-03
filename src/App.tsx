@@ -28,7 +28,7 @@ function AppContent() {
   const { loading: authLoading } = useAuth(); 
   const [pageLoading, setPageLoading] = useState(false);
   const dispatch = useDispatch();
-  const authRoutes = ["/login", "/signup", ];
+  const authRoutes = ["/login", "/signup",'/' ];
 
 
 useEffect(() => {

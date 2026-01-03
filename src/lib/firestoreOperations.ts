@@ -41,12 +41,12 @@ const bookings =snapshot.docs.map(doc => {
   return {
     id: doc.id,
     ...data,
-    bookingDate: data.bookingDate?.toDate?.()
-      ? data.bookingDate.toDate().toISOString()
-      : data.bookingDate instanceof Date
-      ? data.bookingDate.toISOString()
-      : data.bookingDate
-  };
+    bookingDate: data.bookingDate?.toDate
+  ? data.bookingDate.toDate() // keep as Date
+  : data.bookingDate instanceof Date
+  ? data.bookingDate
+  : new Date(data.bookingDate) // fallback
+  }
 });
 
 

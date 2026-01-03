@@ -120,20 +120,25 @@ const BookingPage: React.FC = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const editData = state?.booking;
   
-  const [formData, setFormData] = useState<FormData>({
-    name: editData?.name || user?.displayName || "",
-    email: user?.email || "",
-    phone: editData?.phone || "",
-    selectedDate: editData?.selectedDate
-      ? new Date(editData.selectedDate).toISOString().split("T")[0]
-      : "",
-    selectedSlot: editData?.selectedSlot || null,
-    foodDecoration: editData?.foodDecoration || "",
-    decorationTheme: editData?.decorationTheme || "",
-    vendors: editData?.vendors || [],
-    expectedGuests: editData?.expectedGuests || 0,
-    technicalSetup: editData?.technicalSetup || []
-  });
+// Replace your formData useState initialization with this:
+
+const [formData, setFormData] = useState<FormData>({
+  name: editData?.name || user?.displayName || "",
+  email: user?.email || "",
+  phone: editData?.phone || "",
+  selectedDate: editData?.selectedDate || new Date().toISOString().split("T")[0],
+  selectedSlot: editData?.selectedSlot || null,
+  foodDecoration: editData?.foodDecoration || "",
+  decorationTheme: editData?.decorationTheme || "",
+  vendors: editData?.vendors || [],
+  expectedGuests: editData?.expectedGuests || 0,
+  technicalSetup: editData?.technicalSetup || []
+});
+
+// Also, update your date change handler to ensure proper formatting:
+// In the date input onChange:
+
+
   
   const [isEditMode, setIsEditMode] = useState(false);
   const [editBookingId, setEditBookingId] = useState<string | null>(null);
@@ -461,6 +466,7 @@ const BookingPage: React.FC = () => {
     );
   };
 
+
   useEffect(() => {
     if (hasSubmitted && booking && !bookingLoading) {
       setLoading(false);
@@ -724,12 +730,13 @@ const BookingPage: React.FC = () => {
                           type="date"
                           value={formData.selectedDate}
                           min={new Date().toISOString().split("T")[0]}
-                          onChange={e => {
-                            handleFieldChange('selectedDate', e.target.value);
-                            setFormData(p => ({ ...p, selectedSlot: null }));
-                            setStartTime(null);
-                            setEndTime(null);
-                          }}
+                         onChange={e => {
+  const selectedDate = e.target.value; // Already in YYYY-MM-DD format
+  handleFieldChange('selectedDate', selectedDate);
+  setFormData(p => ({ ...p, selectedSlot: null }));
+  setStartTime(null);
+  setEndTime(null);
+}}
                           onBlur={() => handleFieldBlur('selectedDate')}
                           className={`border p-2 rounded-lg w-full transition-colors ${
                             errors.selectedDate && touchedFields.has('selectedDate')

@@ -103,11 +103,11 @@ const normalizedBookings: Booking[] = (bookings || []).map((b: Booking) => {
   let bookingDate: Date;
 
   if (b.bookingDate?.toDate) {
-    bookingDate = b.bookingDate.toDate();
+    bookingDate = b.bookingDate.toDate(); // ✅ Firestore Timestamp → Date
   } else if (b.bookingDate?.seconds) {
-    bookingDate = new Date(b.bookingDate.seconds * 1000);
+    bookingDate = new Date(b.bookingDate.seconds * 1000); // ✅ another Timestamp
   } else {
-    bookingDate = new Date(b.bookingDate);
+    bookingDate = new Date(b.bookingDate); // fallback
   }
 
   bookingDate.setHours(0, 0, 0, 0);
@@ -129,30 +129,52 @@ const filteredBookings = normalizedBookings.filter(
     { id: 'cancelled' as TabType, label: 'Cancel Events', icon: X, color: 'from-red-500 to-red-600' }
   ];
 
-  const handleEditBooking = (booking: any) => {
-    navigate(`/book/${booking.id}`, {
-      state: {
-        booking: {
-          bookingId: booking.id,
-          name: booking.name,
-          phone: booking.phone,
-          selectedDate: booking.bookingDate,
-          selectedSlot: {
-  start: booking.timeSlot.start,
-  end: booking.timeSlot.end,
-  startIndex: booking.timeSlot.startIndex,
-  endIndex: booking.timeSlot.endIndex,
-  hours: booking.timeSlot.hours
-},
+// Replace your handleEditBooking function in MyBookings.tsx with this:
 
-          foodDecoration: booking.foodDecoration,
-          decorationTheme: booking.decorationTheme,
-          title: booking.eventTitle,
-        }
+const handleEditBooking = (booking: any) => {
+  // Convert to Date object
+  let selectedDate: Date;
+  
+  if (booking.bookingDate instanceof Date) {
+    selectedDate = booking.bookingDate;
+  } else if (booking.bookingDate?.toDate) {
+    selectedDate = booking.bookingDate.toDate();
+  } else if (booking.bookingDate?.seconds) {
+    selectedDate = new Date(booking.bookingDate.seconds * 1000);
+  } else {
+    selectedDate = new Date(booking.bookingDate);
+  }
+
+  // ✅ FIX: Format using LOCAL time, not UTC
+  const year = selectedDate.getFullYear();
+  const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+  const day = String(selectedDate.getDate()).padStart(2, '0');
+  const selectedDateForInput = `${year}-${month}-${day}`;
+
+  console.log("🔹 Computed selectedDate:", selectedDate);
+  console.log("🔹 Date string for input:", selectedDateForInput);
+
+  navigate(`/book/${booking.id}`, {
+    state: {
+      booking: {
+        bookingId: booking.id,
+        name: booking.name,
+        phone: booking.phone,
+        selectedDate: selectedDateForInput, // ✅ Now using local time
+        selectedSlot: {
+          start: booking.timeSlot.start,
+          end: booking.timeSlot.end,
+          startIndex: booking.timeSlot.startIndex,
+          endIndex: booking.timeSlot.endIndex,
+          hours: booking.timeSlot.hours
+        },
+        foodDecoration: booking.foodDecoration,
+        decorationTheme: booking.decorationTheme,
+        title: booking.eventTitle,
       }
-    });
-    console.log(booking);
-  };
+    }
+  });
+};
 
   const getStatusBadge = (status: TabType) => {
     switch (status) {
@@ -207,44 +229,54 @@ const filteredBookings = normalizedBookings.filter(
   className="relative flex gap-8 mb-8 overflow-x-auto pb-2" // <-- increased gap
 >
   {/* Full stable line under all tabs */}
-  <div className="absolute bottom-0 left-0 w-full h-1 bg-gray-300 rounded-full" />
+<div className="" />
 
-  {tabs.map((tab) => {
-    const Icon = tab.icon;
-    const count = normalizedBookings.filter(
-  (b) => b.status === tab.id
-).length;
 
-    
+{tabs.map((tab) => {
+  const Icon = tab.icon;
+  const count = normalizedBookings.filter(
+    (b) => b.status === tab.id
+  ).length;
 
-    return (
-      <div key={tab.id} className="relative flex flex-col items-center min-w-[120px]">
-        <button
-          onClick={() => setSelectedTab(tab.id)}
-          className={`flex items-center gap-2 py-2 font-semibold transition-colors duration-300 ${
-            selectedTab === tab.id ? 'text-[#1FA8B8]' : 'text-gray-600 hover:text-gray-800'
+  return (
+    <div key={tab.id} className="relative flex flex-col items-center min-w-[120px]">
+      <button
+        onClick={() => setSelectedTab(tab.id)}
+        className={`relative flex items-center gap-2 py-2 font-semibold transition-colors duration-300 ${
+          selectedTab === tab.id
+            ? "text-[#1FA8B8]"
+            : "text-gray-600 hover:text-gray-800"
+        }`}
+      >
+        <Icon className="w-5 h-5" />
+        <span>{tab.label}</span>
+
+        <Badge
+          className={`ml-1 text-xs ${
+            selectedTab === tab.id
+              ? "bg-[#1FA8B8] text-white"
+              : "bg-gray-200 text-gray-700"
           }`}
         >
-          <Icon className="w-5 h-5" />
-          <span>{tab.label}</span>
-          <Badge className={`ml-1 text-xs ${selectedTab === tab.id ? 'bg-[#1FA8B8] text-white' : 'bg-gray-200 text-gray-700'}`}>
-            {count}
-          </Badge>
-        </button>
-      </div>
-    );
-  })}
+          {count}
+        </Badge>
+      </button>
+
+      {/* 🔥 Only active tab underline */}
+      {selectedTab === tab.id && (
+        <motion.div
+          layoutId="activeTabUnderline"
+          className="absolute -bottom-[2px] h-[3px] w-full bg-[#1FA8B8] rounded-full"
+          transition={{ type: "spring", stiffness: 400, damping: 30 }}
+        />
+      )}
+    </div>
+  );
+})}
+
 
   {/* Moving indicator under selected tab */}
-  <motion.div
-    layoutId="tabIndicator"
-    className="absolute bottom-0 h-1 bg-[#1FA8B8] rounded-full"
-    style={{
-      width: `calc(100% / ${tabs.length})`,
-      left: `${tabs.findIndex((t) => t.id === selectedTab) * 100 / tabs.length}%`,
-    }}
-    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-  />
+
 </motion.div>
 
 
