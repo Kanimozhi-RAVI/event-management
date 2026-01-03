@@ -2,35 +2,39 @@ import { call, put, takeLatest } from 'redux-saga/effects';
 import * as types from '../Types/AuthType';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth, db } from '../../../lib/firebase';
-import {  doc, getDoc, setDoc } from 'firebase/firestore';
-import { signUpSuccess, signUpFailure, signInSuccess, signInFailure, setUser, logoutSuccess, logoutFailure } from '../Actions/AuthAction';
+import {  doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { signUpSuccess, signUpFailure, signInSuccess, signInFailure, logoutSuccess, logoutFailure } from '../Actions/AuthAction';
 import { logoutUser } from '@/lib/firestoreOperations';
 
-function* signUpSaga(action: any) {
+function* signUpSaga(action: any): Generator<any, void, any>{
   const { email, password, displayName } = action.payload;
   try {
     const userCredential = yield call(createUserWithEmailAndPassword, auth, email, password);
     const firebaseUser = userCredential.user;
     yield call(updateProfile, firebaseUser, { displayName });
-    yield call(setDoc, doc(db, 'users', firebaseUser.uid), {
-      uid: firebaseUser.uid,
-      email,
-      displayName,
-      createdAt: new Date(),
-      photoURL: '',
-    });
+    const userRef = doc(db, "users", firebaseUser.uid);
+
+yield call(() =>
+  setDoc(userRef, {
+    uid: firebaseUser.uid,
+    email,
+    displayName,
+    photoURL: "",
+    createdAt: serverTimestamp(),
+  })
+);
     yield put(signUpSuccess({
       uid: firebaseUser.uid,
       email,
       displayName,
       photoURL: '',
-      createdAt: new Date(),
+      createdAt: Date.now(),
     }));
   } catch (error: any) {
     yield put(signUpFailure(error.message));
   }
 }
-function* signInSaga(action: any) {
+function* signInSaga(action: any): Generator<any, void, any>{
   const { email, password } = action.payload;
   try {
     const userCredential = yield call(
@@ -58,11 +62,10 @@ function* signInSaga(action: any) {
         // ✅ SERIALIZABLE
         createdAt: userDoc.data()?.createdAt
           ? userDoc.data().createdAt.toMillis()
-          : Date.now(),
+          :  Date.now(),
+
       })
     );
-    // After login
-localStorage.getItem('firebase:authUser:YOUR-API-KEY:[DEFAULT]')
 // This should have user data
   } catch (error: any) {
     yield put(signInFailure(error.message));

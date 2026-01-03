@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+
 import {
   BrowserRouter as Router,
   Routes,
@@ -21,6 +21,7 @@ import { useDispatch } from "react-redux";
 import { onAuthStateChanged } from "firebase/auth";
 import { clearUser, setUser } from "./components/Redux/Actions/AuthAction";
 import { auth } from "./lib/firebase";
+import { useEffect, useState } from "react";
 
 /* ================= ROUTES ================= */
 

@@ -13,12 +13,10 @@ import {
   updateBookingSuccess,
   updateBookingFailure,
 } from '../Actions/BookingActions';
-import { db } from '@/lib/firebase';
 import { toast } from '@/hooks/use-toast';
-import { doc, serverTimestamp, updateDoc, getDoc } from 'firebase/firestore';
 
 
-function* fetchUserBookings(action: any) {
+function* fetchUserBookings(action: any): Generator<any, void, any> {
   console.log("🔥 booking saga called", action.payload);
 
   try {
@@ -41,7 +39,7 @@ function* fetchUserBookings(action: any) {
   }
 }
 
-function* cancelUserBooking(action: any) {
+function* cancelUserBooking(action: any): Generator<any, void, any> {
   try {
     const result = yield call(cancelBooking, action.payload);
     if (result.success) {
@@ -54,7 +52,7 @@ function* cancelUserBooking(action: any) {
   }
 }
 
-function* createBookingSaga(action: any) {
+function* createBookingSaga(action: any): Generator<any, void, any> {
   try {
     const result = yield call(createBooking, action.payload);
     

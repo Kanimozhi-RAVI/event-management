@@ -1,6 +1,5 @@
-import { collection, doc, getDocs, query, where, orderBy, updateDoc, Timestamp, addDoc } from 'firebase/firestore';
+import { collection, doc, getDocs, query, where, updateDoc, Timestamp, addDoc } from 'firebase/firestore';
 import { auth, db } from './firebase';
-import { useEffect } from 'react';
 import { signOut } from 'firebase/auth';
 
 export interface BookingData {

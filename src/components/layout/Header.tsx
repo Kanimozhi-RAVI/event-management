@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Calendar, Home, LogOut, UserCircle } from "lucide-react"; 
 import logo from "@/assets/logo.png";
-import { useAuth } from "@/contexts/AuthContext";
 import { getUserBookingsRequest } from "../Redux/Actions/BookingActions";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "../rootReducer";

@@ -1,10 +1,10 @@
-import React from "react";
+
 import { events } from "@/data/events";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { collection, getDoc, getDocs } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 export default function Home() {
@@ -16,6 +16,12 @@ export default function Home() {
     const handleBook = (event: any) => {
     navigate(`/book/${event.id}`, { state: event });
   };
+
+  useEffect(() => {
+  setSelectedDate("");
+  setSelectedSlot("");
+}, []);
+
  useEffect(() => {
     const fetchBookings = async () => {
       try {

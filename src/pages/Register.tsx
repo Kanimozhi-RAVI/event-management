@@ -25,7 +25,8 @@ const RegisterPage = () => {
     email: '',
     password: '',
   });
-  const [isLoading, setIsLoading] = useState(false);
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+
   const [activeTab, setActiveTab] = useState<'user' | 'admin'>('user');
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({ name: '', email: '', password: '' });
@@ -51,7 +52,7 @@ const RegisterPage = () => {
     if (value.length < 6) return 'Password must be at least 6 characters';
     return '';
   };
-  const { loading, error, user } = useSelector(
+  const {loading,  error, user } = useSelector(
   (state: RootState) => state.auth
 );
 
@@ -491,9 +492,9 @@ const floatingAnimation: Variants = {
                     <Button
                       onClick={handleRegister}
                       className="w-full h-10 bg-[#1FA8B8] hover:bg-[#158894] text-white font-semibold text-lg shadow-lg hover:shadow-xl transition-all"
-                      disabled={isLoading}
+                      disabled={loading}
                     >
-                      {isLoading ? (
+                      {loading ? (
                         <motion.div className="flex items-center gap-3">
                           <motion.div
                             className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full"

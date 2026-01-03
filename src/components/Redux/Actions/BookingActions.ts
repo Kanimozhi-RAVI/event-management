@@ -1,4 +1,3 @@
-import { createAction } from '@reduxjs/toolkit';
 import { SET_CURRENT_BOOKING } from '../Reducer/bookingReducer';
 import * as types from '../Types/BookingTypes';
 

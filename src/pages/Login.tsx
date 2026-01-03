@@ -16,7 +16,6 @@ import { signInRequest } from '@/components/Redux/Actions/AuthAction';
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'user' | 'admin'>('user');
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({ email: '', password: '' });
@@ -410,10 +409,10 @@ const floatingAnimation: Variants = {
                   <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
                     <Button
                       onClick={handleLogin}
-                      disabled={isLoading}
+                      disabled={loading}
                       className="w-full h-10 bg-[#1FA8B8] hover:bg-[#158894] text-white font-semibold text-lg shadow-lg hover:shadow-xl transition-all flex items-center justify-center"
                     >
-                      {isLoading ? (
+                      {loading ? (
                         <motion.div className="flex items-center justify-center gap-2">
                           <motion.div
                             className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
