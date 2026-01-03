@@ -109,7 +109,6 @@ const Header: React.FC = () => {
           </div>
         </nav>
 
-        {/* Mobile Menu Button */}
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           className="md:hidden p-2 hover:bg-white/10 rounded-lg transition"
@@ -118,11 +117,11 @@ const Header: React.FC = () => {
         </button>
       </motion.header>
 
-      {/* Mobile Menu Overlay */}
+   
       <AnimatePresence>
         {mobileMenuOpen && (
           <>
-            {/* Backdrop */}
+           
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -131,7 +130,6 @@ const Header: React.FC = () => {
               className="fixed inset-0 bg-black/50 z-40 md:hidden"
             />
 
-            {/* Mobile Menu */}
             <motion.div
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
