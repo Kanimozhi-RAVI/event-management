@@ -1,6 +1,6 @@
 import { call, put, takeLatest } from 'redux-saga/effects';
 import * as types from '../Types/BookingTypes';
-import { getUserBookings, cancelBooking, createBooking, updateBooking } from '../../../lib/firestoreOperations';
+import { getUserBookings, cancelBooking, createBooking, updateBooking } from '../../lib/firestoreOperations';
 import {
   getUserBookingsSuccess,
   getUserBookingsFailure,
@@ -38,14 +38,15 @@ function* fetchUserBookings(action: any): Generator<any, void, any> {
     yield put(getUserBookingsFailure(error.message));
   }
 }
-
-function* cancelUserBooking(action: any): Generator<any, void, any> {
+function* cancelBookingSaga(action: any): any {
   try {
-    const result = yield call(cancelBooking, action.payload);
-    if (result.success) {
-      yield put(cancelBookingSuccess(action.payload));
+    const bookingId = action.payload;
+    const response = yield call(cancelBooking, bookingId);
+
+    if (response.success) {
+      yield put(cancelBookingSuccess(bookingId)); // 🔥 VERY IMPORTANT
     } else {
-      yield put(cancelBookingFailure(result.error));
+      yield put(cancelBookingFailure(response.error));
     }
   } catch (error: any) {
     yield put(cancelBookingFailure(error.message));
@@ -126,6 +127,6 @@ export default function* bookingSaga() {
 
   yield takeLatest(types.CREATE_BOOKING_REQUEST, createBookingSaga);
   yield takeLatest(types.GET_USER_BOOKINGS_REQUEST, fetchUserBookings);
-  yield takeLatest(types.CANCEL_BOOKING_REQUEST, cancelUserBooking);
+  yield takeLatest(types.CANCEL_BOOKING_REQUEST, cancelBookingSaga);
   yield takeLatest(UPDATE_BOOKING_REQUEST, updateBookingSaga);
 }

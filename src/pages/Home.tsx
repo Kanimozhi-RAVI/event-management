@@ -63,7 +63,7 @@ const availableEvents = events.filter(event => {
     <div className="min-h-screen 
   bg-gradient-to-b from-[#F8FEFF] via-[#F1FBFD] to-[#EAF7FA]
   relative overflow-hidden
-  px-6 md:px-24 py-24">
+  px-6 md:px-24 py-10">
 <motion.div
   initial="hidden"
   whileInView="visible"
@@ -132,7 +132,8 @@ const availableEvents = events.filter(event => {
             {/* FLIP CARD CONTAINER */}
             <motion.div
               className="relative w-full h-full [transform-style:preserve-3d] transition-transform duration-700"
-              whileHover={{ rotateY: 180, scale: 1.05 }}
+              whileHover={{ rotateY: 180, scale: 1.05, }}
+               transition={{ duration:0.8 }}
             >
               {/* FRONT */}
              <div className="

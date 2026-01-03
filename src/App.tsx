@@ -9,7 +9,6 @@ import {
 
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import PrivateRoute from "./components/PrivateRoute";
-
 import Signup from "./pages/Register";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
@@ -19,23 +18,30 @@ import AppLayout from "./components/layout/AppLayout";
 import PageLoader from "./components/PageLoader";
 import { useDispatch } from "react-redux";
 import { onAuthStateChanged } from "firebase/auth";
-import { clearUser, setUser } from "./components/Redux/Actions/AuthAction";
+import { clearUser, setUser } from "./Redux/Actions/AuthAction";
 import { auth } from "./lib/firebase";
 import { useEffect, useState } from "react";
 
-/* ================= ROUTES ================= */
 
 function AppContent() {
   const location = useLocation();
-  const { loading: authLoading } = useAuth(); // 🔑 Firebase auth loading
+  const { loading: authLoading } = useAuth(); 
   const [pageLoading, setPageLoading] = useState(false);
   const dispatch = useDispatch();
+  const authRoutes = ["/login", "/signup", ];
 
-  useEffect(() => {
-    setPageLoading(true);
-    const timer = setTimeout(() => setPageLoading(false), 500);
-    return () => clearTimeout(timer);
-  }, [location.pathname]);
+
+useEffect(() => {
+  if (authRoutes.includes(location.pathname)) {
+    setPageLoading(false); // ❌ no loader for login/signup
+    return;
+  }
+
+  setPageLoading(true);
+  const timer = setTimeout(() => setPageLoading(false), 500);
+  return () => clearTimeout(timer);
+}, [location.pathname]);
+
 
 
     useEffect(() => {
@@ -64,6 +70,7 @@ function AppContent() {
     };
   }, [dispatch]);
 
+
   // 🔐 IMPORTANT: wait for Firebase auth
   if (authLoading) {
     return <PageLoader />;
@@ -71,15 +78,14 @@ function AppContent() {
 
   return (
     <>
+
       {pageLoading && <PageLoader />}
 
       <Routes location={location}>
-        {/* PUBLIC ROUTES */}
         <Route path="/" element={<Navigate to="/login" />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
 
-        {/* PRIVATE ROUTES */}
         <Route
           element={
             <PrivateRoute>
@@ -96,7 +102,6 @@ function AppContent() {
   );
 }
 
-/* ================= MAIN APP ================= */
 
 export default function App() {
   return (

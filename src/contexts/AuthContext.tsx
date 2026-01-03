@@ -88,7 +88,7 @@ useEffect(() => {
       console.error("AuthContext error:", err);
       setUser(null);
     } finally {
-      setLoading(false); // ✅ prevent loading stuck
+      setLoading(false); 
     }
   });
 

@@ -18,10 +18,12 @@ export const getUserBookingsFailure = (error: string) => ({
 
 // BookingActions.ts
 // redux/actions/bookingActions.ts
-export const cancelBookingRequest = (bookingId: string, eventId?: string | string[]) => ({
-  type: 'CANCEL_BOOKING_REQUEST',
-  payload: { bookingId, eventId }
+// bookingActions.ts
+export const cancelBookingRequest = (bookingId: string) => ({
+  type: types.CANCEL_BOOKING_REQUEST,
+  payload: bookingId
 });
+
 
 
 

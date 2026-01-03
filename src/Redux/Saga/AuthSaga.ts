@@ -1,39 +1,44 @@
 import { call, put, takeLatest } from 'redux-saga/effects';
 import * as types from '../Types/AuthType';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { auth, db } from '../../../lib/firebase';
 import {  doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { signUpSuccess, signUpFailure, signInSuccess, signInFailure, logoutSuccess, logoutFailure } from '../Actions/AuthAction';
 import { logoutUser } from '@/lib/firestoreOperations';
+import { auth, db } from '@/lib/firebase';
 
-function* signUpSaga(action: any): Generator<any, void, any>{
+function* signUpSaga(action: any): Generator<any, void, any> {
   const { email, password, displayName } = action.payload;
   try {
+    // 1️⃣ Create user in Firebase Auth
     const userCredential = yield call(createUserWithEmailAndPassword, auth, email, password);
     const firebaseUser = userCredential.user;
-    yield call(updateProfile, firebaseUser, { displayName });
-    const userRef = doc(db, "users", firebaseUser.uid);
 
-yield call(() =>
-  setDoc(userRef, {
-    uid: firebaseUser.uid,
-    email,
-    displayName,
-    photoURL: "",
-    createdAt: serverTimestamp(),
-  })
-);
-    yield put(signUpSuccess({
-      uid: firebaseUser.uid,
-      email,
-      displayName,
-      photoURL: '',
-      createdAt: Date.now(),
-    }));
+    // 2️⃣ Update displayName
+    yield call(updateProfile, firebaseUser, { displayName });
+
+    // 3️⃣ Store user in Firestore
+    const userRef = doc(db, "users", firebaseUser.uid);
+    yield call(() =>
+      setDoc(userRef, {
+        uid: firebaseUser.uid,
+        email,
+        displayName,
+        photoURL: "",
+        createdAt: serverTimestamp(),
+      })
+    );
+
+    // 4️⃣ 🔥 Force logout immediately
+    yield call(() => auth.signOut());
+
+    // 5️⃣ Dispatch success (no user in state)
+    yield put(signUpSuccess());
+
   } catch (error: any) {
     yield put(signUpFailure(error.message));
   }
 }
+
 function* signInSaga(action: any): Generator<any, void, any>{
   const { email, password } = action.payload;
   try {

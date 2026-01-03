@@ -6,11 +6,12 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Toaster } from '@/components/ui/toaster';
 import { useToast } from '@/hooks/use-toast';
-import { User, Shield, Lock, Mail, Eye, EyeOff, UserPlus } from 'lucide-react';
+import { User, Lock, Mail, Eye, EyeOff, UserPlus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { signUpRequest } from '@/components/Redux/Actions/AuthAction';
-import type { RootState } from '@/components/rootReducer';
+import type { RootState } from '@/store';
+import { signUpRequest } from '@/Redux/Actions/AuthAction';
+
 
 
 interface RegisterFormData {
@@ -27,7 +28,6 @@ const RegisterPage = () => {
   });
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 
-  const [activeTab, setActiveTab] = useState<'user' | 'admin'>('user');
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({ name: '', email: '', password: '' });
   const [touched, setTouched] = useState({ name: false, email: false, password: false });
@@ -82,16 +82,18 @@ const handleRegister = () => {
   );
 };
 
-
 useEffect(() => {
   if (user) {
     toast({
-      title: "Success",
-      description: `Welcome ${user.displayName || "User"}!`,
+      title: "Account Created",
+      description: "Redirecting to login...",
     });
-    navigate("/dashboard");
+
+    setTimeout(() => {
+      navigate("/login");
+    }, 1500);
   }
-}, [user]);
+}, [user, navigate]);
 
 useEffect(() => {
   if (error) {
@@ -309,54 +311,25 @@ const floatingAnimation: Variants = {
               animate="visible"
               className="p-6 flex flex-col justify-center overflow-y-auto"
             >
-              <motion.div
-                initial={{ y: -20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.4 }}
-                className="mb-2"
-              >
-                <h2 className="text-3xl font-bold text-gray-800 mb-1">Create Account</h2>
-                <p className="text-gray-600">Sign up to get started</p>
-              </motion.div>
+             <div className="flex flex-col items-center justify-center text-center mb-6">
+  {/* Icon */}
+  <div className="w-20 h-20 rounded-2xl bg-[#1FA8B8]/10 flex items-center justify-center ">
+    <UserPlus className="w-10 h-10 text-[#1FA8B8]" />
+  </div>
+
+  {/* Title */}
+  <h2 className="text-3xl font-bold text-gray-800">
+    Create Your Account
+  </h2>
+</div>
+
 
               {/* Tab Selector */}
-              <motion.div
-                initial={{ y: -20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="flex gap-2 mb-4 bg-gray-100 p-1 rounded-xl"
-              >
-                <motion.button
-                  onClick={() => setActiveTab('user')}
-                  className={`flex-1 p-1 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 ${
-                    activeTab === 'user'
-                      ? 'bg-[#1FA8B8] text-white shadow-lg'
-                      : 'text-gray-600 hover:text-gray-800'
-                  }`}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <User className="w-5 h-5" />
-                  User
-                </motion.button>
-                <motion.button
-                  onClick={() => setActiveTab('admin')}
-                  className={`flex-1 p-2 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 ${
-                    activeTab === 'admin'
-                      ? 'bg-[#1FA8B8] text-white shadow-lg'
-                      : 'text-gray-600 hover:text-gray-800'
-                  }`}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <Shield className="w-5 h-5" />
-                  Admin
-                </motion.button>
-              </motion.div>
+             
 
               <AnimatePresence mode="wait">
                 <motion.div
-                  key={activeTab}
+                  // key={activeTab}
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
@@ -421,7 +394,7 @@ const floatingAnimation: Variants = {
                         setErrors({ ...errors, email: validateEmail(formData.email) });
                       }}
                       onKeyPress={handleKeyPress}
-                      placeholder={`Enter your ${activeTab} email`}
+                      placeholder={`Enter your email`}
                       className={`h-10 border-2 transition-all ${
                         touched.email && errors.email
                           ? 'border-red-500 focus:border-red-500'
@@ -467,13 +440,14 @@ const floatingAnimation: Variants = {
                             : 'border-gray-200 focus:border-[#1FA8B8]'
                         }`}
                       />
-                      <motion.button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#1FA8B8] transition-colors"
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                      >
+                     <motion.button
+  type="button"
+  onMouseDown={(e) => e.preventDefault()}   // 🔥 IMPORTANT
+  onClick={() => setShowPassword(!showPassword)}
+  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#1FA8B8] transition-colors"
+
+>
+
                         {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                       </motion.button>
                     </div>

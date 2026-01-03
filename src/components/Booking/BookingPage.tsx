@@ -15,14 +15,11 @@ import {
   Lock,
   CheckCircle2,
   Sparkles,
-  Mail
+  Mail,
+  Clock
 } from "lucide-react";
-import eventimage from '../../assets/event.jpg';
 import { useDispatch, useSelector } from "react-redux";
-import { createBookingRequest, updateBookingRequest } from "../Redux/Actions/BookingActions";
-
-
-/* ================= TYPES ================= */
+import { createBookingRequest, updateBookingRequest } from "../../Redux/Actions/BookingActions";
 
 interface Event {
   id: string;
@@ -61,8 +58,6 @@ interface ValidationErrors {
   decorationTheme?: string;
 }
 
-/* ================= CONSTANTS ================= */
-
 const FOOD_OPTIONS = [
   { label: "Veg + Basic", value: "Veg Food + Basic Decoration" },
   { label: "Non-Veg + Classic", value: "Non-Veg Food + Classic Decoration" },
@@ -81,7 +76,25 @@ const HOURLY_SLOTS = [
   "05:00 PM","06:00 PM","07:00 PM","08:00 PM","09:00 PM","10:00 PM"
 ];
 
-/* ================= COMPONENT ================= */
+// ✅ Helper function to get current hour in 12-hour format
+const getCurrentHourIndex = (): number => {
+  const now = new Date();
+  const hours = now.getHours();
+  const minutes = now.getMinutes();
+  
+  // Convert 24-hour to 12-hour format with AM/PM
+  let hour12 = hours % 12;
+  if (hour12 === 0) hour12 = 12;
+  const ampm = hours >= 12 ? "PM" : "AM";
+  
+  const currentTimeStr = `${hour12.toString().padStart(2, "0")}:00 ${ampm}`;
+  
+  // Find index in HOURLY_SLOTS
+  const index = HOURLY_SLOTS.indexOf(currentTimeStr);
+  
+  // If current minute > 0, move to next hour
+  return minutes > 0 && index < HOURLY_SLOTS.length - 1 ? index + 1 : index;
+};
 
 const BookingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -101,10 +114,10 @@ const BookingPage: React.FC = () => {
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [open, setOpen] = useState(false);
   const [startTime, setStartTime] = useState<string | null>(null);
- const [_bookedDates, setBookedDates] = useState<string[]>([]);
-const [_endTime, setEndTime] = useState<string | null>(null);
+  const [_bookedDates, setBookedDates] = useState<string[]>([]);
+  const [_endTime, setEndTime] = useState<string | null>(null);
 
-const dropdownRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const editData = state?.booking;
   
   const [formData, setFormData] = useState<FormData>({
@@ -124,7 +137,6 @@ const dropdownRef = useRef<HTMLDivElement>(null);
   
   const [isEditMode, setIsEditMode] = useState(false);
   const [editBookingId, setEditBookingId] = useState<string | null>(null);
-  
 
   useEffect(() => {
     if (editData?.bookingId) {
@@ -133,82 +145,99 @@ const dropdownRef = useRef<HTMLDivElement>(null);
     }
   }, [editData]);
 
-const handleSelect = (time: string) => {
-  const startIndex = startTime ? HOURLY_SLOTS.indexOf(startTime) : -1;
-  const clickedIndex = HOURLY_SLOTS.indexOf(time);
+  const handleSelect = (time: string) => {
+    const startIndex = startTime ? HOURLY_SLOTS.indexOf(startTime) : -1;
+    const clickedIndex = HOURLY_SLOTS.indexOf(time);
 
-  // First click → select startTime
-  if (!startTime) {
-    setStartTime(time);
+    // First click → select startTime
+    if (!startTime) {
+      setStartTime(time);
+      setEndTime(time);
+      setFormData(prev => ({
+        ...prev,
+        selectedSlot: {
+          start: time,
+          end: time,
+          startIndex: clickedIndex,
+          endIndex: clickedIndex + 1,
+          hours: 1,
+        }
+      }));
+      
+      // Clear error when slot is selected
+      if (touchedFields.has("selectedSlot")) {
+        setErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors.selectedSlot;
+          return newErrors;
+        });
+      }
+      
+      setOpen(true);
+      return;
+    }
+
+    // Ensure endTime is after startTime
+    if (clickedIndex < startIndex) {
+      alert("End time must be after start time");
+      return;
+    }
+
+    // Slice range of slots
+    const slotRange = HOURLY_SLOTS.slice(startIndex, clickedIndex + 1);
+
+    // Check if any slot is booked
+    const isBlocked = slotRange.some(s => bookedSlots.includes(s));
+    if (isBlocked) {
+      alert("Selected range includes already booked slots");
+      return;
+    }
+
+    // Update endTime & formData
     setEndTime(time);
     setFormData(prev => ({
       ...prev,
       selectedSlot: {
-        start: time,
+        start: startTime,
         end: time,
-        startIndex: clickedIndex,
+        startIndex,
         endIndex: clickedIndex + 1,
-        hours: 1,
+        hours: clickedIndex + 1 - startIndex,
       }
     }));
-    setOpen(true); // keep dropdown open for extending
-    return;
-  }
 
-  // Ensure endTime is after startTime
-  if (clickedIndex < startIndex) {
-    alert("End time must be after start time");
-    return;
-  }
+    // Close dropdown automatically
+    setOpen(false);
 
-  // Slice range of slots
-  const slotRange = HOURLY_SLOTS.slice(startIndex, clickedIndex + 1);
-
-  // Check if any slot is booked
-  const isBlocked = slotRange.some(s => bookedSlots.includes(s));
-  if (isBlocked) {
-    alert("Selected range includes already booked slots");
-    return;
-  }
-
-  // Update endTime & formData
-  setEndTime(time);
-  setFormData(prev => ({
-    ...prev,
-    selectedSlot: {
-      start: startTime,
-      end: time,
-      startIndex,
-      endIndex: clickedIndex + 1,
-      hours: clickedIndex + 1 - startIndex,
+    // Clear error if any
+    if (touchedFields.has("selectedSlot")) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.selectedSlot;
+        return newErrors;
+      });
     }
-  }));
+  };
 
-  // Close dropdown automatically
-  setOpen(false);
-
-  // Clear error if any
-  if (touchedFields.has("selectedSlot")) {
-    setErrors(prev => {
-      const newErrors = { ...prev };
-      delete newErrors.selectedSlot;
-      return newErrors;
-    });
-  }
-};
-
-
-
-
-  /* ================= FETCH BOOKED DATES ================= */
-const availableSlots = HOURLY_SLOTS.map((time, index) => {
-  const isBooked = bookedSlots.includes(time);
-  const isSelected =
-    formData.selectedSlot &&
-    index >= formData.selectedSlot.startIndex &&
-    index < formData.selectedSlot.endIndex;
-  return { time, isBooked, isSelected };
-});
+  // ✅ Filter slots based on current time for today's date
+  const availableSlots = HOURLY_SLOTS.map((time, index) => {
+    const isBooked = bookedSlots.includes(time);
+    const isSelected =
+      formData.selectedSlot &&
+      index >= formData.selectedSlot.startIndex &&
+      index < formData.selectedSlot.endIndex;
+    
+    // ✅ Check if selected date is today
+    const selectedDate = formData.selectedDate;
+    const today = new Date().toISOString().split("T")[0];
+    const isToday = selectedDate === today;
+    
+    // ✅ If today, hide past times
+    const currentHourIndex = getCurrentHourIndex();
+    const isPastTime = isToday && index < currentHourIndex;
+    
+    return { time, isBooked, isSelected, isPastTime };
+  });
 
   useEffect(() => {
     const fetchBookedDates = async () => {
@@ -228,48 +257,44 @@ const availableSlots = HOURLY_SLOTS.map((time, index) => {
     fetchBookedDates();
   }, [event?.id, editData]);
 
-  /* ================= FETCH BOOKED SLOTS ================= */
-
-useEffect(() => {
-  const handleClickOutside = (e: MouseEvent) => {
-    if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-      setOpen(false);
-    }
-  };
-  document.addEventListener("mousedown", handleClickOutside);
-  return () => document.removeEventListener("mousedown", handleClickOutside);
-}, []);
-useEffect(() => {
-  if (!formData.selectedDate || !event?.id) return;
-
-  const fetchSlots = async () => {
-    const q = query(
-      collection(db, "bookings"),
-      where("eventId", "==", event.id),
-      where(
-        "bookingDate",
-        "==",
-        Timestamp.fromDate(new Date(formData.selectedDate))
-      )
-    );
-    const snap = await getDocs(q);
-    const slots: string[] = [];
-    snap.forEach(d => {
-      if (editData && d.id === editData.bookingId) return; // skip edit booking
-
-      const bookedSlot = d.data().timeSlot;
-      // Expand bookedSlot range into individual hours
-      for (let i = bookedSlot.startIndex; i < bookedSlot.endIndex; i++) {
-        slots.push(HOURLY_SLOTS[i]);
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setOpen(false);
       }
-    });
-    setBookedSlots([...new Set(slots)]); // unique slots only
-  };
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
-  fetchSlots();
-}, [formData.selectedDate, event?.id, editData]);
+  useEffect(() => {
+    if (!formData.selectedDate || !event?.id) return;
 
-  /* ================= VALIDATION ================= */
+    const fetchSlots = async () => {
+      const q = query(
+        collection(db, "bookings"),
+        where("eventId", "==", event.id),
+        where(
+          "bookingDate",
+          "==",
+          Timestamp.fromDate(new Date(formData.selectedDate))
+        )
+      );
+      const snap = await getDocs(q);
+      const slots: string[] = [];
+      snap.forEach(d => {
+        if (editData && d.id === editData.bookingId) return;
+
+        const bookedSlot = d.data().timeSlot;
+        for (let i = bookedSlot.startIndex; i < bookedSlot.endIndex; i++) {
+          slots.push(HOURLY_SLOTS[i]);
+        }
+      });
+      setBookedSlots([...new Set(slots)]);
+    };
+
+    fetchSlots();
+  }, [formData.selectedDate, event?.id, editData]);
 
   const validateField = (fieldName: string, value: any): string | undefined => {
     switch (fieldName) {
@@ -363,15 +388,12 @@ useEffect(() => {
     }
   };
 
-  /* ================= CONFIRM BOOKING ================= */
-  
   const confirmBooking = () => {
     if (!user) {
       alert("Login required");
       return;
     }
 
-    // Mark all fields as touched
     setTouchedFields(new Set([
       "name",
       "phone",
@@ -381,7 +403,6 @@ useEffect(() => {
       "decorationTheme"
     ]));
 
-    // Validate form - MUST STOP if invalid
     const isValid = validateForm();
     
     if (!isValid) {
@@ -389,7 +410,6 @@ useEffect(() => {
       return;
     }
 
-    // Additional check for time slot
     if (!formData.selectedSlot) {
       alert("Please select time slot");
       return;
@@ -408,7 +428,6 @@ useEffect(() => {
       return;
     }
 
-    // ✅ EDIT MODE
     if (isEditMode && editBookingId) {
       dispatch(
         updateBookingRequest({
@@ -426,7 +445,6 @@ useEffect(() => {
       return;
     }
 
-    // ✅ CREATE MODE
     dispatch(
       createBookingRequest({
         eventId: event.id,
@@ -457,31 +475,22 @@ useEffect(() => {
     }
   }, [booking, bookingLoading, error, hasSubmitted]);
 
-  const leftVariants:Variants= {
-    hidden: { opacity: 0, x: -60 },
+
+
+  const cardVariants: Variants = {
+    hidden: { opacity: 0, x: -50 },
     visible: {
       opacity: 1,
       x: 0,
-      transition: { duration: 2, ease: "easeOut" }
-    }
-  };
-
-const cardVariants: Variants = {
-  hidden: { opacity: 0, x: -50 },
-  visible: {
-    opacity: 1,
-    x: 0,
-    transition: {
-      type: "spring", // ✅ type matches AnimationGeneratorType
-      stiffness: 300,
-      damping: 25,
-      duration: 0.5, // optional
-      ease: "easeInOut" // ✅ must match Easing type
+      transition: {
+        type: "spring",
+        stiffness: 300,
+        damping: 25,
+        duration: 0.5,
+        ease: "easeInOut"
+      },
     },
-  },
-};
-
-  /* ================= LOADING UI ================= */
+  };
 
   if (loading) {
     return (
@@ -564,88 +573,31 @@ const cardVariants: Variants = {
     );
   }
 
-  /* ================= MAIN UI ================= */
-
   return (
     <>
-      <div
-        className="min-h-screen flex relative"
-        style={{
-          backgroundImage: `url(${eventimage})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center"
-        }}
-      >
-        <div className="absolute inset-0 bg-black/50" />
-
-        <div className="relative z-10 flex w-full h-full">
-          <motion.div
-            variants={leftVariants}
-            initial="hidden"
-            animate="visible"
-            className="hidden lg:flex flex-col justify-center flex-1 px-16 text-white relative z-10"
-          >
-            <h2 className="text-4xl font-bold mb-4 leading-tight">
-              Make Your Event <br />
-              <span className="text-[#65C9DA]">Unforgettable</span>
-            </h2>
-
-            <p className="text-white/80 mb-6 max-w-md">
-              Book premium event planning with customized themes,
-              professional setup and seamless execution.
-            </p>
-
-            <ul className="space-y-3 text-sm">
-              {[
-                "Premium Decoration Themes",
-                "Hygienic Catering Options",
-                "On-Time Setup & Support",
-                "Trusted by 500+ Clients"
-              ].map((text, i) => (
-                <motion.li
-                  key={i}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.4 + i * 0.15 }}
-                  className="flex items-center gap-2"
-                >
-                  ✔ {text}
-                </motion.li>
-              ))}
-            </ul>
-
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1.2 }}
-              className="mt-8 text-xs text-white/60"
-            >
-              📞 24/7 Support • Secure Booking • Easy Cancellation
-            </motion.div>
-          </motion.div>
-
-          <div className="flex-1" />
+   <div className="relative z-10 flex justify-center w-full pt-8 pb-8 px-6">
 
           <motion.div
             variants={cardVariants}
             initial="hidden"
             animate="visible"
-            className="relative w-full max-w-xl m-6 mt-4 rounded-xl shadow-2xl overflow-visible
+            className="relative w-full max-w-xl rounded-xl shadow-2xl overflow-visible
                        bg-white/60 backdrop-blur-md border border-white/20"
           >
-            <div className="relative overflow-hidden rounded-t-xl bg-gradient-to-r from-[#1FA8B8] to-[#65C9DA] p-2 text-white">
-              <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full" />
-              <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-white/10 rounded-full" />
-              <div className="rounded-t-xl bg-[#65C9DA]/90 backdrop-blur-md p-6 text-white shadow-lg 
-                              flex flex-col items-center justify-center text-center">
-                <h1 className="text-2xl font-semibold">
-                  {editData?.title || event.title}
-                </h1>
-                <p className="text-xs mt-1 text-white/80">
-                  Secure booking • Real-time slots
-                </p>
-              </div>
-            </div>
+            <div className="relative overflow-hidden rounded-t-xl bg-gradient-to-r from-[#1FA8B8] to-[#65C9DA] p-6 text-white flex flex-col items-center justify-center text-center">
+  {/* Decorative circles */}
+  <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full" />
+  <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-white/10 rounded-full" />
+  
+  {/* Content */}
+  <h1 className="text-2xl font-semibold">
+    {editData?.title || event.title}
+  </h1>
+  <p className="text-xs mt-1 text-white/80">
+    Secure booking • Real-time slots
+  </p>
+</div>
+
 
             <div className="p-5">
               <AnimatePresence mode="wait">
@@ -832,38 +784,57 @@ const cardVariants: Variants = {
                         </AnimatePresence>
                       </div>
 
-                    <div ref={dropdownRef} className="relative w-full">
-  <div
-    onClick={() => formData.selectedDate && setOpen(!open)}
-    className={`border p-2 rounded-lg bg-white cursor-pointer transition-colors ${
-      !formData.selectedDate ? "bg-gray-100 cursor-not-allowed" : ""
-    }`}
-  >
-    {formData.selectedSlot
-      ? `${formData.selectedSlot.start} - ${formData.selectedSlot.end}`
-      : "Select Time"}
-  </div>
+                      <div ref={dropdownRef} className="relative w-full">
+                        <label className="text-sm font-medium mb-1 flex items-center gap-1">
+                          <Clock size={14} className="text-gray-500" />
+                          <span>Time Slot</span>
+                        </label>
+                        <div
+                          onClick={() => formData.selectedDate && setOpen(!open)}
+                          onBlur={() => handleFieldBlur('selectedSlot')}
+                          className={`border p-2 rounded-lg bg-white cursor-pointer transition-colors ${
+                            !formData.selectedDate 
+                              ? "bg-gray-100 cursor-not-allowed" 
+                              : errors.selectedSlot && touchedFields.has('selectedSlot')
+                              ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                              : 'border-gray-300 focus:border-[#65C9DA] focus:ring-[#65C9DA]/20'
+                          } ${formData.selectedDate ? 'focus:outline-none focus:ring-2' : ''}`}
+                        >
+                          {formData.selectedSlot
+                            ? `${formData.selectedSlot.start} - ${formData.selectedSlot.end}`
+                            : "Select Time"}
+                        </div>
+                        <AnimatePresence>
+                          {errors.selectedSlot && touchedFields.has('selectedSlot') && (
+                            <motion.p
+                              initial={{ opacity: 0, y: -10, height: 0 }}
+                              animate={{ opacity: 1, y: 0, height: 'auto' }}
+                              exit={{ opacity: 0, y: -10, height: 0 }}
+                              className="text-red-500 text-xs mt-1 flex items-center gap-1"
+                            >
+                              {errors.selectedSlot}
+                            </motion.p>
+                          )}
+                        </AnimatePresence>
 
-  {open && formData.selectedDate && (
-    <div className="absolute mt-2 w-full max-h-60 overflow-y-auto bg-white border rounded-lg shadow-lg z-50">
-  {availableSlots
-  .filter(slot => !slot.isBooked) // only show available slots
-  .map(slot => (
-    <div
-      key={slot.time}
-      onClick={() => handleSelect(slot.time)}
-      className={`px-3 py-2 text-sm cursor-pointer 
-        ${slot.isSelected ? "bg-[#65C9DA] text-white" : "hover:bg-gray-100"}
-      `}
-    >
-      {slot.time}
-    </div>
-))}
-
-    </div>
-  )}
-</div>
-
+                        {open && formData.selectedDate && (
+                          <div className="absolute mt-2 w-full max-h-60 overflow-y-auto bg-white border rounded-lg shadow-lg z-50">
+                            {availableSlots
+                              .filter(slot => !slot.isBooked && !slot.isPastTime)
+                              .map(slot => (
+                                <div
+                                  key={slot.time}
+                                  onClick={() => handleSelect(slot.time)}
+                                  className={`px-3 py-2 text-sm cursor-pointer 
+                                    ${slot.isSelected ? "bg-[#65C9DA] text-white" : "hover:bg-gray-100"}
+                                  `}
+                                >
+                                  {slot.time}
+                                </div>
+                              ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </motion.div>
                 )}
@@ -911,35 +882,34 @@ const cardVariants: Variants = {
                       Confirmation sent to <strong>{formData.email}</strong>
                     </motion.p>
 
-                   <motion.div
-  initial={{ opacity: 0, y: 20 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ delay: 0.7 }}
-  className="mt-4 bg-gradient-to-br from-[#65C9DA]/40 to-[#1FA8B8]/40 rounded-2xl p-6 text-left text-sm shadow-lg border border-white/20 backdrop-blur-sm"
->
-  <div className="flex justify-between mb-2">
-    <span className="text-gray-800 font-medium">Event:</span>
-    <span className="font-semibold">{editData?.title || event.title}</span>
-  </div>
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.7 }}
+                      className="mt-4 bg-gradient-to-br from-[#65C9DA]/40 to-[#1FA8B8]/40 rounded-2xl p-6 text-left text-sm shadow-lg border border-white/20 backdrop-blur-sm"
+                    >
+                      <div className="flex justify-between mb-2">
+                        <span className="text-gray-800 font-medium">Event:</span>
+                        <span className="font-semibold">{editData?.title || event.title}</span>
+                      </div>
 
-  <div className="space-y-3 text-sm">
-    <div className="flex justify-between">
-      <span className="text-gray-800">Date:</span>
-      <span className="font-semibold">{formData.selectedDate}</span>
-    </div>
-    <div className="flex justify-between">
-      <span className="text-gray-800">Time:</span>
-      <span className="font-medium">
+                      <div className="space-y-3 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-800">Date:</span>
+                          <span className="font-semibold">{formData.selectedDate}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-800">Time:</span>
+                          <span className="font-medium">
                             {formData.selectedSlot?.start} - {formData.selectedSlot?.end}
                           </span>
-    </div>
-    <div className="flex justify-between">
-      <span className="text-gray-800">Theme:</span>
-      <span className="font-semibold">{formData.decorationTheme}</span>
-    </div>
-  </div>
-</motion.div>
-
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-800">Theme:</span>
+                          <span className="font-semibold">{formData.decorationTheme}</span>
+                        </div>
+                      </div>
+                    </motion.div>
 
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
@@ -989,7 +959,7 @@ const cardVariants: Variants = {
             )}
           </motion.div>
         </div>
-      </div>
+      
     </>
   );
 };

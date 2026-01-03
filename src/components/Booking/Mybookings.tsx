@@ -18,8 +18,8 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import type { RootState } from '../rootReducer';
-import { cancelBookingRequest, getUserBookingsRequest } from '../Redux/Actions/BookingActions';
+import { cancelBookingRequest, getUserBookingsRequest } from '../../Redux/Actions/BookingActions';
+import type { RootState } from '@/store';
 
 type TabType = 'upcoming' | 'past' | 'cancelled';
 type BookingStatus = "upcoming" | "past" | "cancelled";
@@ -86,11 +86,10 @@ const MyBookings = () => {
     return () => clearTimeout(timer);
   }, [bookings, cancellingId, toast]);
 
-  // FIX 3: Handle cancel with both bookingId and eventId
-  const handleCancelBooking = (bookingId: string, eventId?: string) => {
-    setCancellingId(bookingId);
-    dispatch(cancelBookingRequest(bookingId, eventId));
-  };
+const handleCancelBooking = (bookingId: string) => {
+  setCancellingId(bookingId);
+  dispatch(cancelBookingRequest(bookingId));
+};
 
 
 // start of today
@@ -98,9 +97,11 @@ const MyBookings = () => {
 const now = new Date();
 now.setHours(0, 0, 0, 0);
 
-const filteredBookings = (bookings || []).map((b: Booking) => {
-  // Convert Firebase Timestamp or plain date to JS Date
+
+
+const normalizedBookings: Booking[] = (bookings || []).map((b: Booking) => {
   let bookingDate: Date;
+
   if (b.bookingDate?.toDate) {
     bookingDate = b.bookingDate.toDate();
   } else if (b.bookingDate?.seconds) {
@@ -108,20 +109,24 @@ const filteredBookings = (bookings || []).map((b: Booking) => {
   } else {
     bookingDate = new Date(b.bookingDate);
   }
-  bookingDate.setHours(0, 0, 0, 0); // normalize for date comparison
 
-  // Determine status if not explicitly set
-  let status: BookingStatus = b.status ?? (bookingDate >= now ? 'upcoming' : 'past');
+  bookingDate.setHours(0, 0, 0, 0);
+
+  let status: BookingStatus =
+    b.status ?? (bookingDate >= now ? 'upcoming' : 'past');
 
   return { ...b, bookingDate, status };
-}).filter((b: Booking) => b.status === selectedTab);
+});
 
+const filteredBookings = normalizedBookings.filter(
+  (b) => b.status === selectedTab
+);
 
 
   const tabs = [
-    { id: 'upcoming' as TabType, label: 'Upcoming', icon: Calendar, color: 'from-[#1FA8B8] to-[#158894]' },
+    { id: 'upcoming' as TabType, label: 'Upcoming Events', icon: Calendar, color: 'from-[#1FA8B8] to-[#158894]' },
     { id: 'past' as TabType, label: 'Past Events', icon: Clock, color: 'from-gray-500 to-gray-600' },
-    { id: 'cancelled' as TabType, label: 'Cancelled', icon: X, color: 'from-red-500 to-red-600' }
+    { id: 'cancelled' as TabType, label: 'Cancel Events', icon: X, color: 'from-red-500 to-red-600' }
   ];
 
   const handleEditBooking = (booking: any) => {
@@ -175,37 +180,7 @@ const filteredBookings = (bookings || []).map((b: Booking) => {
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#F5F5F5]">
-        <motion.div
-          className="relative w-24 h-24"
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-        >
-          <motion.div
-            className="absolute inset-0 rounded-full"
-            style={{
-              boxShadow: 'inset 0 0 0 1rem #1FA8B8',
-              filter: 'drop-shadow(0 0 1rem rgba(31, 168, 184, 0.5))',
-            }}
-            animate={{
-              boxShadow: ['inset 0 0 0 1rem #1FA8B8', 'inset 0 0 0 0 #1FA8B8'],
-              opacity: [1, 0],
-            }}
-            transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
-          />
-          <motion.div
-            className="absolute rounded-full"
-            style={{
-              width: 'calc(100% - 2rem)',
-              height: 'calc(100% - 2rem)',
-              filter: 'drop-shadow(0 0 1rem rgba(31, 168, 184, 0.5))',
-            }}
-            animate={{
-              boxShadow: ['0 0 0 0 #1FA8B8', '0 0 0 1rem #1FA8B8'],
-              opacity: [0, 1],
-            }}
-            transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
-          />
-        </motion.div>
+      
         <motion.p
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -219,102 +194,61 @@ const filteredBookings = (bookings || []).map((b: Booking) => {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] pb-12">
+    <div className="min-h-screen pb-10 mt-20">
       {/* Header Section */}
-      <motion.div
-        initial={{ y: -50, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        className="bg-gradient-to-r from-[#1FA8B8] to-[#158894] text-white py-12 px-4 relative overflow-hidden"
-      >
-        <motion.div
-          className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl"
-          animate={{
-            scale: [1, 1.2, 1],
-            x: [0, 30, 0],
-            y: [0, -20, 0],
-          }}
-          transition={{ duration: 8, repeat: Infinity }}
-        />
-        <motion.div
-          className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full blur-3xl"
-          animate={{
-            scale: [1, 1.3, 1],
-            x: [0, -20, 0],
-            y: [0, 20, 0],
-          }}
-          transition={{ duration: 6, repeat: Infinity }}
-        />
-
-        <div className="container mx-auto max-w-6xl relative z-10">
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-            className="flex items-center gap-3 mb-4"
-          >
-            <div className="w-14 h-14 bg-white/20 backdrop-blur-lg rounded-2xl flex items-center justify-center">
-              <Ticket className="w-7 h-7" />
-            </div>
-            <div>
-              <h1 className="text-4xl font-bold">My Bookings</h1>
-              <p className="text-white/80 text-sm">Manage all your event bookings</p>
-            </div>
-          </motion.div>
-        </div>
-      </motion.div>
+    
 
       <div className="container mx-auto max-w-6xl px-4 -mt-6">
         {/* Tabs */}
-        <motion.div
-          initial={{ y: 50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="flex gap-3 mb-8 overflow-x-auto pb-2"
-        >
-         {tabs.map((tab, index) => {
-  const Icon = tab.icon;
+<motion.div
+  initial={{ y: 50, opacity: 0 }}
+  animate={{ y: 0, opacity: 1 }}
+  transition={{ delay: 0.2 }}
+  className="relative flex gap-8 mb-8 overflow-x-auto pb-2" // <-- increased gap
+>
+  {/* Full stable line under all tabs */}
+  <div className="absolute bottom-0 left-0 w-full h-1 bg-gray-300 rounded-full" />
 
-  const count = (bookings || []).filter((b: Booking) => {
-    // Use status from booking, fallback to 'upcoming'
-    const status = b.status || 'upcoming';
-    return status === tab.id;
-  }).length;  
-            
-            return (
-              <motion.button
-                key={tab.id}
-                onClick={() => setSelectedTab(tab.id)}
-                className={`relative px-6 py-4 rounded-2xl font-semibold whitespace-nowrap transition-all duration-300 flex items-center gap-3 min-w-[160px] ${
-                  selectedTab === tab.id
-                    ? 'bg-white text-gray-800 shadow-xl'
-                    : 'bg-white/60 text-gray-600 hover:bg-white hover:shadow-lg'
-                }`}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                {selectedTab === tab.id && (
-                  <motion.div
-                    layoutId="activeTab"
-                    className={`absolute inset-0 bg-gradient-to-r ${tab.color} rounded-2xl opacity-10`}
-                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                  />
-                )}
-                <Icon className={`w-5 h-5 ${selectedTab === tab.id ? 'text-[#1FA8B8]' : ''}`} />
-                <span className="relative z-10">{tab.label}</span>
-                <Badge className={`relative z-10 ${
-                  selectedTab === tab.id 
-                    ? 'bg-[#1FA8B8] text-white' 
-                    : 'bg-gray-200 text-gray-700'
-                }`}>
-                  {count}
-                </Badge>
-              </motion.button>
-            );
-          })}
-        </motion.div>
+  {tabs.map((tab) => {
+    const Icon = tab.icon;
+    const count = normalizedBookings.filter(
+  (b) => b.status === tab.id
+).length;
+
+    
+
+    return (
+      <div key={tab.id} className="relative flex flex-col items-center min-w-[120px]">
+        <button
+          onClick={() => setSelectedTab(tab.id)}
+          className={`flex items-center gap-2 py-2 font-semibold transition-colors duration-300 ${
+            selectedTab === tab.id ? 'text-[#1FA8B8]' : 'text-gray-600 hover:text-gray-800'
+          }`}
+        >
+          <Icon className="w-5 h-5" />
+          <span>{tab.label}</span>
+          <Badge className={`ml-1 text-xs ${selectedTab === tab.id ? 'bg-[#1FA8B8] text-white' : 'bg-gray-200 text-gray-700'}`}>
+            {count}
+          </Badge>
+        </button>
+      </div>
+    );
+  })}
+
+  {/* Moving indicator under selected tab */}
+  <motion.div
+    layoutId="tabIndicator"
+    className="absolute bottom-0 h-1 bg-[#1FA8B8] rounded-full"
+    style={{
+      width: `calc(100% / ${tabs.length})`,
+      left: `${tabs.findIndex((t) => t.id === selectedTab) * 100 / tabs.length}%`,
+    }}
+    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+  />
+</motion.div>
+
+
+
 
         {/* Bookings List */}
         <AnimatePresence mode="wait">
@@ -512,7 +446,7 @@ const filteredBookings = (bookings || []).map((b: Booking) => {
                           className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-100"
                         >
                           <Button
-                            onClick={() => handleCancelBooking(booking.id, booking.eventId)}
+                            onClick={() => handleCancelBooking(booking.id,)}
                             disabled={cancellingId === booking.id}
                             variant="outline"
                             className="w-40 border-2 border-red-400 text-red-500 hover:bg-red-50 hover:border-red-500 font-semibold h-10"

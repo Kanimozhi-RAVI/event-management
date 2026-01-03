@@ -36,4 +36,4 @@ Framer Motion, and Firebase.
 4. Run `npm run dev`
 
 ## Live Demo
-👉 https://your-vercel-link.vercel.app
+👉 https://event-management-eal2.vercel.app/

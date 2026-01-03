@@ -52,14 +52,17 @@ export const bookingReducer = (state = initialState, action: any) => {
       };
     
 
-    case types.CANCEL_BOOKING_SUCCESS:
-      return {
-        ...state,
-        loading: false,
-        bookings: state.bookings.map(b =>
-          b.id === action.payload ? { ...b, status: 'cancelled' } : b
-        ),
-      };
+ case types.CANCEL_BOOKING_SUCCESS:
+  return {
+    ...state,
+    loading: false,
+    bookings: state.bookings.map(b =>
+      b.id === action.payload
+        ? { ...b, status: 'cancelled' }
+        : b
+    )
+  };
+
 
     case types.GET_USER_BOOKINGS_FAILURE:
     case types.CANCEL_BOOKING_FAILURE:

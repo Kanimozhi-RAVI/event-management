@@ -5,10 +5,10 @@ export const signUpRequest = (email: string, password: string, displayName: stri
   payload: { email, password, displayName },
 });
 
-export const signUpSuccess = (user: any) => ({
+export const signUpSuccess = () => ({
   type: types.SIGN_UP_SUCCESS,
-  payload: user,
 });
+
 
 export const signUpFailure = (error: string) => ({
   type: types.SIGN_UP_FAILURE,

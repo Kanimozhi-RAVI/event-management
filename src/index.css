@@ -14,7 +14,6 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* background: linear-gradient(135deg, #0d9488 0%, #06b6d4 100%); */
   min-height: 100vh;
 }
 
@@ -84,7 +83,6 @@ body {
     @apply bg-background text-foreground;
   }
 }
-/* 3D Flip Card support */
 .perspective-1000 {
   perspective: 1000px;
 }
@@ -98,7 +96,6 @@ body {
   transform: rotateY(180deg);
 }
 
-/* Optional diagonal / polygon style */
 .clip-diagonal {
   clip-path: polygon(0 0, 100% 5%, 100% 95%, 0 100%);
   transition: clip-path 0.5s ease;

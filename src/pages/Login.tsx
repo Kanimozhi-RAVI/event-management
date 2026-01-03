@@ -6,17 +6,18 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Toaster } from '@/components/ui/toaster';
 import { useToast } from '@/hooks/use-toast';
-import { User, Shield, Lock, Mail, Calendar, Eye, EyeOff } from 'lucide-react';
+import { Lock, Mail, Calendar, Eye, EyeOff, UserCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import type { RootState } from '@/components/rootReducer';
-import type { AppDispatch } from '@/components/store';
-import { signInRequest } from '@/components/Redux/Actions/AuthAction';
+import type { AppDispatch, RootState } from '@/store';
+import { signInRequest } from '@/Redux/Actions/AuthAction';
+
+
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [activeTab, setActiveTab] = useState<'user' | 'admin'>('user');
+  // const [activeTab, setActiveTab] = useState<'user' | 'admin'>('user');
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({ email: '', password: '' });
   const [touched, setTouched] = useState({ email: false, password: false });
@@ -272,48 +273,23 @@ const floatingAnimation: Variants = {
                 transition={{ delay: 0.4 }}
                 className="mb-4"
               >
-                <h2 className="text-3xl font-bold text-gray-800">Welcome Back!</h2>
-                <p className="text-gray-600">Sign in to continue to your account</p>
-              </motion.div>
+                <div className="flex flex-col items-center justify-center text-center mb-2">
+  <div className="w-20 h-20 rounded-2xl bg-[#1FA8B8]/10 flex items-center justify-center ">
+    <UserCircle className="w-10 h-10 text-[#1FA8B8]" />
+  </div>
 
-              {/* Tab Selector */}
-              <motion.div
-                initial={{ y: -20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="flex gap-2 mb-8 bg-gray-100 p-1 rounded-xl"
-              >
-                <motion.button
-                  onClick={() => setActiveTab('user')}
-                  className={`flex-1 p-2 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 ${
-                    activeTab === 'user'
-                      ? 'bg-[#1FA8B8] text-white shadow-lg'
-                      : 'text-gray-600 hover:text-gray-800'
-                  }`}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <User className="w-5 h-5" />
-                  User Login
-                </motion.button>
-                <motion.button
-                  onClick={() => setActiveTab('admin')}
-                  className={`flex-1 p-2 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 ${
-                    activeTab === 'admin'
-                      ? 'bg-[#1FA8B8] text-white shadow-lg'
-                      : 'text-gray-600 hover:text-gray-800'
-                  }`}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <Shield className="w-5 h-5" />
-                  Admin Login
-                </motion.button>
+  <h2 className="text-3xl font-bold text-gray-800">
+    Welcome Back!
+  </h2>
+</div>
+
+
+               
               </motion.div>
 
               <AnimatePresence mode="wait">
                 <motion.div
-                  key={activeTab}
+                  // key={activeTab}
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
@@ -340,7 +316,7 @@ const floatingAnimation: Variants = {
                         setErrors({ ...errors, email: validateEmail(email) });
                       }}
                       onKeyPress={handleKeyPress}
-                      placeholder={`Enter your ${activeTab} email`}
+                      placeholder={`Enter your email`}
                       className={`h-10 border-2 transition-all ${
                         touched.email && errors.email
                           ? 'border-red-500 focus:border-red-500'
@@ -389,8 +365,7 @@ const floatingAnimation: Variants = {
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-3 inset-y-0 flex items-center text-gray-500 hover:text-[#1FA8B8] transition-colors"
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
+                     
                       >
                         {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                       </motion.button>
