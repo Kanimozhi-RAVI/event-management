@@ -30,7 +30,7 @@ const Header: React.FC = () => {
     }
   };
 
-  // Helper to check if nav is active
+
   const isActive = (path: string) => location.pathname === path;
 
   return (
