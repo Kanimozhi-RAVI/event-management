@@ -2,7 +2,7 @@ import * as types from "../Types/AuthType";
 
 const initialState = {
   user: null,
-  loading: true, // 🔥 wait for firebase auth
+  loading: false, // 🔥 wait for firebase auth
   error: null,
 };
 
