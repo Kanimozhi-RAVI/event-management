@@ -188,14 +188,18 @@ const [formData, setFormData] = useState<FormData>({
     }
 
     // Ensure endTime is after startTime
- if (clickedIndex < startIndex) {
-  toast({
-    title: "Invalid Time Selection",
-    description: "End time must be after start time",
-    variant: "destructive",
-  });
+if (clickedIndex < startIndex) {
+  if (lastError !== "invalid-order") {
+    toast({
+      title: "Invalid Time Selection",
+      description: "End time must be after start time",
+      variant: "destructive",
+    });
+    setLastError("invalid-order");
+  }
   return;
 }
+
 
 
     // Slice range of slots
@@ -258,6 +262,7 @@ const [formData, setFormData] = useState<FormData>({
     
     return { time, isBooked, isSelected, isPastTime };
   });
+const [lastError, setLastError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchBookedDates = async () => {
@@ -788,7 +793,7 @@ if (!user) {
                           )}
                         </AnimatePresence>
                       </div>
-                      <div className="space-y-1">
+                      <div className="space-y-1"  ref={dropdownRef}>
   <label className="block text-sm font-medium text-gray-700">
     Time Slot
   </label>
@@ -813,11 +818,20 @@ if (!user) {
     {formData.selectedSlot && (
       <button
         type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          setFormData(prev => ({ ...prev, selectedSlot: null }));
-          setOpen(false);
-        }}
+       onClick={(e) => {
+  e.stopPropagation();
+
+  setFormData(prev => ({ ...prev, selectedSlot: null }));
+  setStartTime(null);
+  setEndTime(null);
+  setOpen(false);
+
+  toast({
+    title: "Selection cleared",
+    description: "Please select a new time slot",
+  });
+}}
+
         className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
       >
         <svg 
