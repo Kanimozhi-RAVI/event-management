@@ -16,10 +16,13 @@ import {
   CheckCircle2,
   Sparkles,
   Mail,
-  Clock
+  
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { createBookingRequest, updateBookingRequest } from "../../Redux/Actions/BookingActions";
+import { useToast } from "@/hooks/use-toast";
+import { Toaster } from "../ui/toaster";
+
 
 interface Event {
   id: string;
@@ -100,6 +103,8 @@ const BookingPage: React.FC = () => {
   const navigate = useNavigate();
   const { state } = useLocation();
   const { user } = useAuth();
+  const { toast } = useToast();
+
 
   if (!state) return <div>No Event Found</div>;
   const event = state as Event;
@@ -183,20 +188,30 @@ const [formData, setFormData] = useState<FormData>({
     }
 
     // Ensure endTime is after startTime
-    if (clickedIndex < startIndex) {
-      alert("End time must be after start time");
-      return;
-    }
+ if (clickedIndex < startIndex) {
+  toast({
+    title: "Invalid Time Selection",
+    description: "End time must be after start time",
+    variant: "destructive",
+  });
+  return;
+}
+
 
     // Slice range of slots
     const slotRange = HOURLY_SLOTS.slice(startIndex, clickedIndex + 1);
 
     // Check if any slot is booked
     const isBlocked = slotRange.some(s => bookedSlots.includes(s));
-    if (isBlocked) {
-      alert("Selected range includes already booked slots");
-      return;
-    }
+  if (isBlocked) {
+  toast({
+    title: "Slot Not Available",
+    description: "Selected time range includes already booked slots",
+    variant: "destructive",
+  });
+  return;
+}
+
 
     // Update endTime & formData
     setEndTime(time);
@@ -272,35 +287,44 @@ const [formData, setFormData] = useState<FormData>({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    if (!formData.selectedDate || !event?.id) return;
+useEffect(() => {
+  if (!formData.selectedDate || !event?.id) return;
 
-    const fetchSlots = async () => {
-      const q = query(
-        collection(db, "bookings"),
-        where("eventId", "==", event.id),
-        where(
-          "bookingDate",
-          "==",
-          Timestamp.fromDate(new Date(formData.selectedDate))
-        )
-      );
-      const snap = await getDocs(q);
-      const slots: string[] = [];
-      snap.forEach(d => {
-        if (editData && d.id === editData.bookingId) return;
+  const fetchSlots = async () => {
+    const q = query(
+      collection(db, "bookings"),
+      where("bookingDate", "==", Timestamp.fromDate(new Date(formData.selectedDate))),
+      where("eventId", "==", event.id)
+    );
+    
+    const snap = await getDocs(q);
+    const slots: string[] = [];
+    
+    snap.forEach(d => {
+      const data = d.data();
+      
+      // ✅ Edit mode-ல current booking skip
+      if (editData && d.id === editData.bookingId) return;
+      
+      // ✅ Cancelled bookings-ஐ skip பண்ணுங்க
+      if (data.status === "cancelled") return;
 
-        const bookedSlot = d.data().timeSlot;
-        for (let i = bookedSlot.startIndex; i < bookedSlot.endIndex; i++) {
-          slots.push(HOURLY_SLOTS[i]);
-        }
-      });
-      setBookedSlots([...new Set(slots)]);
-    };
+      const bookedSlot = data.timeSlot;
+      
+      // ✅ Start time-லிருந்து End time வரை எல்லா slots-யும் add பண்ணுங்க
+ for (let i = bookedSlot.startIndex; i < bookedSlot.endIndex; i++) {
+  if (HOURLY_SLOTS[i]) {
+    slots.push(HOURLY_SLOTS[i]);
+  }
+}
 
-    fetchSlots();
-  }, [formData.selectedDate, event?.id, editData]);
+    });
+    
+    setBookedSlots([...new Set(slots)]);
+  };
 
+  fetchSlots();
+}, [formData.selectedDate, event?.id, editData]);
   const validateField = (fieldName: string, value: any): string | undefined => {
     switch (fieldName) {
       case 'name':
@@ -394,10 +418,15 @@ const [formData, setFormData] = useState<FormData>({
   };
 
   const confirmBooking = () => {
-    if (!user) {
-      alert("Login required");
-      return;
-    }
+if (!user) {
+  toast({
+    title: "Login Required",
+    description: "Please login to continue booking",
+    variant: "destructive",
+  });
+  return;
+}
+
 
     setTouchedFields(new Set([
       "name",
@@ -581,6 +610,8 @@ const [formData, setFormData] = useState<FormData>({
 
   return (
     <>
+          <Toaster />
+    
    <div className="relative z-10 flex justify-center w-full pt-8 pb-8 px-6">
 
           <motion.div
@@ -757,6 +788,79 @@ const [formData, setFormData] = useState<FormData>({
                           )}
                         </AnimatePresence>
                       </div>
+                      <div className="space-y-1">
+  <label className="block text-sm font-medium text-gray-700">
+    Time Slot
+  </label>
+  
+  <div className="relative">
+    <div
+      onClick={() => formData.selectedDate && setOpen(!open)}
+      onBlur={() => handleFieldBlur('selectedSlot')}
+      className={`border p-2 rounded-lg bg-white cursor-pointer transition-colors pr-10 ${
+        !formData.selectedDate
+          ? "bg-gray-100 cursor-not-allowed"
+          : errors.selectedSlot && touchedFields.has('selectedSlot')
+          ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+          : 'border-gray-300 focus:border-[#65C9DA] focus:ring-[#65C9DA]/20'
+      } ${formData.selectedDate ? 'focus:outline-none focus:ring-2' : ''}`}
+    >
+      {formData.selectedSlot
+        ? `${formData.selectedSlot.start} - ${formData.selectedSlot.end}`
+        : "Select Time"}
+    </div>
+
+    {formData.selectedSlot && (
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          setFormData(prev => ({ ...prev, selectedSlot: null }));
+          setOpen(false);
+        }}
+        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+      >
+        <svg 
+          xmlns="http://www.w3.org/2000/svg" 
+          className="h-5 w-5" 
+          viewBox="0 0 20 20" 
+          fill="currentColor"
+        >
+          <path 
+            fillRule="evenodd" 
+            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" 
+            clipRule="evenodd" 
+          />
+        </svg>
+      </button>
+    )}
+
+    {/* ✅ Dropdown - Absolute position, card extend ஆகாது */}
+    {open && formData.selectedDate && (
+      <div className="absolute z-10 mt-1 w-full border border-gray-300 rounded-lg shadow-lg bg-white max-h-60 overflow-auto">
+        {availableSlots
+          .filter(slot => !slot.isBooked && !slot.isPastTime)
+          .map(slot => (
+            <div
+              key={slot.time}
+              onClick={() => handleSelect(slot.time)}
+              className={`px-3 py-2 text-sm cursor-pointer
+                ${slot.isSelected ? "bg-[#65C9DA] text-white" : "hover:bg-gray-100"}
+              `}
+            >
+              {slot.time}
+            </div>
+          ))}
+      </div>
+    )}
+  </div>
+
+  {errors.selectedSlot && touchedFields.has('selectedSlot') && (
+    <p className="text-red-500 text-sm mt-1">
+      {errors.selectedSlot}
+    </p>
+  )}
+</div>
 
                       <div>
                         <label className="text-sm font-medium mb-1 block">
@@ -791,57 +895,7 @@ const [formData, setFormData] = useState<FormData>({
                         </AnimatePresence>
                       </div>
 
-                      <div ref={dropdownRef} className="relative w-full">
-                        <label className="text-sm font-medium mb-1 flex items-center gap-1">
-                          <Clock size={14} className="text-gray-500" />
-                          <span>Time Slot</span>
-                        </label>
-                        <div
-                          onClick={() => formData.selectedDate && setOpen(!open)}
-                          onBlur={() => handleFieldBlur('selectedSlot')}
-                          className={`border p-2 rounded-lg bg-white cursor-pointer transition-colors ${
-                            !formData.selectedDate 
-                              ? "bg-gray-100 cursor-not-allowed" 
-                              : errors.selectedSlot && touchedFields.has('selectedSlot')
-                              ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                              : 'border-gray-300 focus:border-[#65C9DA] focus:ring-[#65C9DA]/20'
-                          } ${formData.selectedDate ? 'focus:outline-none focus:ring-2' : ''}`}
-                        >
-                          {formData.selectedSlot
-                            ? `${formData.selectedSlot.start} - ${formData.selectedSlot.end}`
-                            : "Select Time"}
-                        </div>
-                        <AnimatePresence>
-                          {errors.selectedSlot && touchedFields.has('selectedSlot') && (
-                            <motion.p
-                              initial={{ opacity: 0, y: -10, height: 0 }}
-                              animate={{ opacity: 1, y: 0, height: 'auto' }}
-                              exit={{ opacity: 0, y: -10, height: 0 }}
-                              className="text-red-500 text-xs mt-1 flex items-center gap-1"
-                            >
-                              {errors.selectedSlot}
-                            </motion.p>
-                          )}
-                        </AnimatePresence>
-
-                        {open && formData.selectedDate && (
-                          <div className="absolute mt-2 w-full max-h-60 overflow-y-auto bg-white border rounded-lg shadow-lg z-50">
-                            {availableSlots
-                              .filter(slot => !slot.isBooked && !slot.isPastTime)
-                              .map(slot => (
-                                <div
-                                  key={slot.time}
-                                  onClick={() => handleSelect(slot.time)}
-                                  className={`px-3 py-2 text-sm cursor-pointer 
-                                    ${slot.isSelected ? "bg-[#65C9DA] text-white" : "hover:bg-gray-100"}
-                                  `}
-                                >
-                                  {slot.time}
-                                </div>
-                              ))}
-                          </div>
-                        )}
-                      </div>
+                     
                     </div>
                   </motion.div>
                 )}

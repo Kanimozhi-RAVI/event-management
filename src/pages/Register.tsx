@@ -10,7 +10,7 @@ import { User, Lock, Mail, Eye, EyeOff, UserPlus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '@/store';
-import { signUpRequest } from '@/Redux/Actions/AuthAction';
+import { resetRegistrationState, signUpRequest } from '@/Redux/Actions/AuthAction';
 
 
 
@@ -35,6 +35,17 @@ const RegisterPage = () => {
   const navigate = useNavigate();
   const dispatch =useDispatch()
 
+
+
+    useEffect(() => {
+    // Reset registration state when component mounts
+    dispatch(resetRegistrationState());
+    
+    // Cleanup on unmount
+    return () => {
+      dispatch(resetRegistrationState());
+    };
+  }, [dispatch]);
   const validateName = (value: string) => {
     if (!value) return 'Name is required';
     if (value.length < 2) return 'Name must be at least 2 characters';
@@ -52,58 +63,63 @@ const RegisterPage = () => {
     if (value.length < 6) return 'Password must be at least 6 characters';
     return '';
   };
-  const {loading,  error, user } = useSelector(
-  (state: RootState) => state.auth
-);
+  const { loading, error, isRegistered } = useSelector(
+    (state: RootState) => state.auth
+  );
+
 
 const handleRegister = () => {
-  const nameError = validateName(formData.name);
-  const emailError = validateEmail(formData.email);
-  const passwordError = validatePassword(formData.password);
+    const nameError = validateName(formData.name);
+    const emailError = validateEmail(formData.email);
+    const passwordError = validatePassword(formData.password);
 
-  setErrors({ name: nameError, email: emailError, password: passwordError });
-  setTouched({ name: true, email: true, password: true });
+    setErrors({ name: nameError, email: emailError, password: passwordError });
+    setTouched({ name: true, email: true, password: true });
 
-  if (nameError || emailError || passwordError) {
-    toast({
-      title: "Validation Error",
-      description: "Please fix the errors",
-      variant: "destructive",
-    });
-    return;
-  }
+    if (nameError || emailError || passwordError) {
+      toast({
+        title: "Validation Error",
+        description: "Please fix the errors",
+        variant: "destructive",
+      });
+      return;
+    }
 
-  dispatch(
-    signUpRequest(
-      formData.email,
-      formData.password,
-      formData.name
-    )
-  );
-};
+    // ✅ Dispatch pannunga (await vendam)
+    dispatch(
+      signUpRequest(
+        formData.email,
+        formData.password,
+        formData.name
+      )
+    );
+  };
 
-useEffect(() => {
-  if (user) {
-    toast({
-      title: "Account Created",
-      description: "Redirecting to login...",
-    });
+ useEffect(() => {
+    if (isRegistered && !loading) {
+      toast({
+        title: "Account Created Successfully!",
+        description: "Redirecting to login page...",
+      });
 
-    setTimeout(() => {
-      navigate("/login");
-    }, 1500);
-  }
-}, [user, navigate]);
+      const timer = setTimeout(() => {
+        navigate("/login");
+      }, 1500);
 
-useEffect(() => {
-  if (error) {
-    toast({
-      title: "Registration Failed",
-      description: error,
-      variant: "destructive",
-    });
-  }
-}, [error]);
+      return () => clearTimeout(timer);
+    }
+  }, [isRegistered, loading, navigate, toast]);
+
+  // ✅ Error handling
+  useEffect(() => {
+    if (error && !loading) {
+      toast({
+        title: "Registration Failed",
+        description: error,
+        variant: "destructive",
+      });
+    }
+  }, [error, loading, toast]);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {

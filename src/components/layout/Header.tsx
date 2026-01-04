@@ -4,15 +4,16 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Home, LogOut, UserCircle, Menu, X } from "lucide-react"; 
 import logo from "@/assets/logo.png";
 import { getUserBookingsRequest } from "../../Redux/Actions/BookingActions";
-import { useDispatch, useSelector } from "react-redux";
-import type { RootState } from "../../rootReducer";
+import { useDispatch } from "react-redux";
 import { logoutRequest } from "../../Redux/Actions/AuthAction";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Header: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
-  const { user } = useSelector((state: RootState) => state.auth);
+    const { user } = useAuth();
+  
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

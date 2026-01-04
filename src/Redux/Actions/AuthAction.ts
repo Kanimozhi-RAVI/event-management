@@ -1,14 +1,21 @@
 import * as types from '../Types/AuthType';
 
+export const resetRegistrationState = () => ({
+  type: types.RESET_REGISTRATION_STATE,
+});
+
 export const signUpRequest = (email: string, password: string, displayName: string) => ({
   type: types.SIGN_UP_REQUEST,
   payload: { email, password, displayName },
 });
 
+// ✅ Fix: payload add pannunga
+
+
 export const signUpSuccess = () => ({
   type: types.SIGN_UP_SUCCESS,
+  payload: { isRegistered: true }, // ✅ Add this
 });
-
 
 export const signUpFailure = (error: string) => ({
   type: types.SIGN_UP_FAILURE,
@@ -30,28 +37,19 @@ export const signInFailure = (error: string) => ({
   payload: error,
 });
 
-
-// Redux/Actions/AuthActions.ts
-export const SET_USER = 'SET_USER';
-export const CLEAR_USER = 'CLEAR_USER';
-export const AUTH_LOADING = 'AUTH_LOADING';
-
 export const setUser = (user: any) => ({
-  type: SET_USER,
+  type: types.SET_USER,
   payload: user
 });
 
 export const clearUser = () => ({
-  type: CLEAR_USER
+  type: types.CLEAR_USER
 });
 
 export const setAuthLoading = (loading: boolean) => ({
-  type: AUTH_LOADING,
+  type: types.AUTH_LOADING,
   payload: loading
 });
-export const logout = () => ({ type: types.LOGOUT });
-
-
 
 export const logoutRequest = () => ({
   type: types.LOGOUT_REQUEST
@@ -65,5 +63,3 @@ export const logoutFailure = (error: string) => ({
   type: types.LOGOUT_FAILURE,
   payload: error
 });
-
-// export const setUser = (user: any) => ({ type: types.SET_USER, payload: user });

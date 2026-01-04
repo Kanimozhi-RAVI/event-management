@@ -13,7 +13,7 @@ import { useEffect, useState } from "react";
 
 
 function AppContent() {
-  const { loading } = useAuth(); // Firebase auth
+  const { loading: authLoading } = useAuth();// Firebase auth
   const location = useLocation();
   const [pageLoading, setPageLoading] = useState(false);
 
@@ -24,12 +24,13 @@ function AppContent() {
     return () => clearTimeout(timer);
   }, [location.pathname]);
 
-  // 🔐 Only show loader for auth or page navigation
-  const showLoader = loading || pageLoading;
+  if (authLoading) {
+    return <PageLoader />;
+  }
 
   return (
     <>
-      {showLoader && <PageLoader />}
+      {pageLoading && <PageLoader />}
 
       <Routes location={location}>
         <Route path="/" element={<Navigate to="/login" />} />

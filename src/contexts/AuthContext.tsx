@@ -54,15 +54,12 @@ useEffect(() => {
       setUser(null);
     }
 
-    // 👇 FORCE loader visibility
-    setTimeout(() => {
-      setLoading(false);
-    }, 800); // 👈 500–800ms sweet spot
+    // ✅ setTimeout இல்லாமல் உடனடியாக loading முடிக்கவும்
+    setLoading(false);
   });
 
   return unsubscribe;
 }, []);
-
 
   const signUp = async (email: string, password: string, displayName: string) => {
     const res = await createUserWithEmailAndPassword(auth, email, password);

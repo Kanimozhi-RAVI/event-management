@@ -20,6 +20,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { cancelBookingRequest, getUserBookingsRequest } from '../../Redux/Actions/BookingActions';
 import type { RootState } from '@/store';
+import { useAuth } from '@/contexts/AuthContext';
 
 type TabType = 'upcoming' | 'past' | 'cancelled';
 type BookingStatus = "upcoming" | "past" | "cancelled";
@@ -53,7 +54,7 @@ const MyBookings = () => {
   const dispatch = useDispatch();
 
   // FIX 1: Access bookings from correct reducer path
-  const user = useSelector((state: RootState) => state.auth.user);
+    const { user } = useAuth();
   const { bookings, loading, error } = useSelector(
     (state: RootState) => state.bookings // Make sure this matches your reducer name
   );
